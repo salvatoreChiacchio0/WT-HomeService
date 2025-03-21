@@ -27,6 +27,6 @@ dotenv.config();
     TypeOrmModule.forFeature([User])
   ],
   controllers: [UsersController, AuthController],
-  providers: [UsersService, AuthService,JwtService],
+  providers: [UsersService, AuthService],
 })
 export class AppModule {}

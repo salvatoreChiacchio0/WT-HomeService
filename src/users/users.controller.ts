@@ -6,6 +6,7 @@ import { User } from 'src/entities/users/users.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  
   @Get()
   findAll() {
     console.log('Fetching all users');
@@ -18,7 +19,6 @@ export class UsersController {
     return this.usersService.findOne(email);
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post()
   create(@Body() user: User) {
     console.log('Creating user:', user);
