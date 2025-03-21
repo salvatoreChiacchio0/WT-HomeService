@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { Users } from 'src/entities/users/users.entity';
+import { User } from 'src/entities/users/users.entity';
 
 @Controller('users')
 export class UsersController {
@@ -8,26 +8,32 @@ export class UsersController {
 
   @Get()
   findAll() {
+    console.log('Fetching all users');
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get(':email')
+  findOne(@Param('email') email: string) {
+    console.log(`Fetching user with email: ${email}`);
+    return this.usersService.findOne(email);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post()
-  create(@Body() user: Users) {
+  create(@Body() user: User) {
+    console.log('Creating user:', user);
     return this.usersService.create(user);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() user: Users) {
+  update(@Param('id') id: string, @Body() user: User) {
+    console.log(`Updating user with id: ${id}`, user);
     return this.usersService.update(+id, user);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    console.log(`Deleting user with id: ${id}`);
     return this.usersService.delete(+id);
   }
 }

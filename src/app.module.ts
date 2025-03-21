@@ -4,7 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
-import { Users } from './entities/users/users.entity';
+import { User } from './entities/users/users.entity';
+import { AuthService } from './auth/auth.service';
+import { AuthController } from './auth/auth.controller';
+import { AuthModule } from './auth/auth.module';
+import { JwtService } from '@nestjs/jwt';
 
 dotenv.config();
 
@@ -12,18 +16,17 @@ dotenv.config();
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD?.toString(),
-      database: process.env.DB_NAME,
-      entities: [Users],
+      url: `postgres://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+      entities: ["dist/**/*.entity.js"],
       synchronize: true,
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      logging: true, 
     }),
     UsersModule,
-    TypeOrmModule.forFeature([Users])
+    AuthModule,
+    TypeOrmModule.forFeature([User])
   ],
-  controllers: [UsersController],
-  providers: [ UsersService],
+  controllers: [UsersController, AuthController],
+  providers: [UsersService, AuthService,JwtService],
 })
 export class AppModule {}
