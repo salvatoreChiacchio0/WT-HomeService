@@ -16,7 +16,7 @@
     "noFallthroughCasesInSwitch": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "target": "es6"
 
   }
