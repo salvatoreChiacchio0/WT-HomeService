@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/entities/users/users.entity';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorators';
 
 @Controller('users')
+@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

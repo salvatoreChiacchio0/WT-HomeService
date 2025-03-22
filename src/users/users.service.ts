@@ -26,7 +26,6 @@ export class UsersService {
 
   async create(user: Partial<User>): Promise<User> {
     const newUser = this.usersRepository.create(user);
-    log("usercreated", newUser)
     return this.usersRepository.save(user);
   }
 

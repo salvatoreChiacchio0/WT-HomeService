@@ -21,19 +21,11 @@ import { LoginDto } from 'src/DTO/login-dto';
     constructor(private authService: AuthService,private userService:UsersService) {}
   
     @Public()
-    @ApiOperation({ summary: 'Login into HomeService',requestBody:{description:"Body",content:{} }})
-
+    @ApiOperation({ summary: 'Login into HomeService'})
     @HttpCode(HttpStatus.OK)
     @Post('login')
     signIn(@Body() signInDto: LoginDto) {
-      console.log('Attempting login for user:', signInDto.email);
       return this.authService.signIn(signInDto.email, signInDto.password);
     }
-  
-    @UseGuards(AuthGuard)
-    @Post('user')
-    getUser(@Body() email:string) {
-      console.log(`Fetching user with email: ${email}`);
-      return this.userService.findOne(email);
-    }
+
   }

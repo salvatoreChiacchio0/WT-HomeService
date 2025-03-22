@@ -6,10 +6,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: true  
+  });
+
   const config = new DocumentBuilder()
   .setTitle('API Web Technology')
-  .setDescription('Here you can test the work of the two faboulous Backend Engineers')
+  .setDescription('Here you can test the work of the two faboulous Backend Engineers! :)')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
