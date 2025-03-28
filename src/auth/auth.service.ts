@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDTOResponse } from 'src/DTO/login-dto';
+import { User } from 'src/entities/users/users.entity';
+import { SignupDTOResponse } from 'src/DTO/signup-dto';
 
 @Injectable()
 export class AuthService {
@@ -25,5 +27,16 @@ export class AuthService {
       accessToken: await this.jwtService.signAsync(payload),
       user: result
     };
+  }
+  async signUp(user: User): Promise<SignupDTOResponse>{
+    const newUser = this.usersService.create(user);
+    if(!newUser){
+      throw new Error(`User not created`);
+    }
+    return{
+      message:"User created successfully", 
+      code: 200
+    };
+
   }
 }

@@ -16,10 +16,10 @@ dotenv.config();
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DB_CONN_STRING,
+      url: `postgres://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
       entities: ["dist/**/*.entity.js"],
       synchronize:false,
-      ssl:true,
+      // ssl:true,
     }),
     UsersModule,
     AuthModule,
