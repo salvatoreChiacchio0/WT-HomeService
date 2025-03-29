@@ -9,6 +9,7 @@ import { AuthService } from './auth/auth.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
+import { ChatGateway } from './chat/chat.gateway';
 
 dotenv.config();
 
@@ -26,6 +27,6 @@ dotenv.config();
     TypeOrmModule.forFeature([User])
   ],
   controllers: [UsersController, AuthController],
-  providers: [UsersService, AuthService],
+  providers: [UsersService, AuthService, ChatGateway],
 })
 export class AppModule {}
