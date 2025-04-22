@@ -11,10 +11,10 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-  .setTitle('API Web Technology')
-  .setDescription('Here you can test the work of the two faboulous Backend Engineers! :)')
+  .setTitle('HomeServices - API Web Technology')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('chat', 'WebSocket chat endpoints')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

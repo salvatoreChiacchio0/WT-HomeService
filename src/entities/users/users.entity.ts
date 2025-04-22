@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 // import { ServiceProviders } from './service-providers.entity';
 
+export enum Role {
+  Customer = "customer",
+  Admin = "admin",
+  User = "user"
+}
+
 @Entity({name:"User",comment:"class of the generic user",schema:"public"})
 export class User {
   @PrimaryGeneratedColumn({name:"user_id",comment:"id of the user"})
@@ -21,8 +27,8 @@ export class User {
   password: string;
   
   @ApiProperty()
-  @Column({ type: 'enum', enum: ['customer', 'provider', 'admin'] })
-  role: string;
+  @Column({ type: 'enum', enum: Role })
+  role: Role[];
   
   @ApiProperty()
   @Column()
@@ -47,3 +53,4 @@ export class User {
   /*@OneToMany(() => ServiceProviders, (provider) => provider.user)
   service_providers: ServiceProviders[];*/
 }
+

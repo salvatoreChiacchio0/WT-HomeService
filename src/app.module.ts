@@ -10,6 +10,12 @@ import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 import { ChatGateway } from './chat/chat.gateway';
+import { AdminReportsModule } from './admin-reports/admin-reports.module';
+import { AdminReports } from './entities/admin-reports/admin_reports.entity';
+import { ChatService } from './chat/chat.service';
+import { ChatModule } from './chat/chat.module';
+import { ChatController } from './chat/chat.controller';
+import { Message } from './entities/chat/chat.entity';
 
 dotenv.config();
 
@@ -24,9 +30,15 @@ dotenv.config();
     }),
     UsersModule,
     AuthModule,
-    TypeOrmModule.forFeature([User])
+    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([AdminReports]),
+    TypeOrmModule.forFeature([Message]),
+
+    AdminReportsModule,
+    AdminReportsModule,
+    ChatModule
   ],
-  controllers: [UsersController, AuthController],
-  providers: [UsersService, AuthService, ChatGateway],
+  controllers: [UsersController, AuthController,ChatController],
+  providers: [UsersService, AuthService, ChatService],
 })
 export class AppModule {}
