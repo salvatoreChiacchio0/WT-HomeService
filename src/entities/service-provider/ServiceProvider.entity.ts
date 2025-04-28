@@ -8,7 +8,7 @@ export class ServiceProviders{
     user_id: number; 
 
     @Column({nullable: true})
-    experiences_years: number;
+    experience_years: number;
 
     @Column({type: 'numeric', precision: 5, scale: 2, nullable: true})
     rating: number | null 

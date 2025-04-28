@@ -6,13 +6,13 @@ export class Service {
   service_id: number;
 
   @Column()
-  name: string;
+  service_name: string;
 
   @Column({ nullable: true })
   description: string;
 
   @Column()
-  category: string;
+  location: string;
 
   @Column({ nullable: true, type: 'numeric', precision: 10, scale: 2 })
   price: number | null;

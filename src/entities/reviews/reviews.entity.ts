@@ -6,7 +6,7 @@ export class Review {
   review_id: number;
 
   @Column()
-  user_id: number;
+  customer_id: number;
 
   @Column()
   provider_id: number;
@@ -15,7 +15,7 @@ export class Review {
   rating: number;
 
   @Column({ nullable: true })
-  comment: string;
+  review_text: string;
 
   @Column()
   created_at: Date;

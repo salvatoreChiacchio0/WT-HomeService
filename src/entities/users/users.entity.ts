@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, BaseEntity } from 'typeorm';
+import { AdminReports } from '../admin-reports/admin_reports.entity';
 // import { ServiceProviders } from './service-providers.entity';
 
 export enum Role {
@@ -9,7 +10,7 @@ export enum Role {
 }
 
 @Entity({name:"User",comment:"class of the generic user",schema:"public"})
-export class User {
+export class User extends BaseEntity{
   @PrimaryGeneratedColumn({name:"user_id",comment:"id of the user"})
   user_id: number;
   
@@ -49,6 +50,9 @@ export class User {
   @ApiProperty()
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
+
+  @OneToMany(() => AdminReports, (report) => report.admin_id)
+  adminReports: AdminReports[]; // Esplicita la proprietà adminReports
 
   /*@OneToMany(() => ServiceProviders, (provider) => provider.user)
   service_providers: ServiceProviders[];*/

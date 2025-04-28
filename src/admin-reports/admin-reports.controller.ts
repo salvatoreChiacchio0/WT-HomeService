@@ -4,6 +4,7 @@ import { CreateReportDto } from 'src/DTO/report-dto';
 import { Role } from 'src/entities/users/users.entity';
 import { AdminReportsService } from './admin-reports.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { AdminReports } from 'src/entities/admin-reports/admin_reports.entity';
 
 @Controller('admin-reports')
 @ApiBearerAuth()
@@ -13,7 +14,7 @@ export class AdminReportsController {
   
     @Post()
     @Roles(Role.Admin)
-    create(@Body() createReport: CreateReportDto) {
+    create(@Body() createReport: AdminReports) {
         this.reportService.create(createReport)
     }
 
@@ -23,7 +24,7 @@ export class AdminReportsController {
     return this.reportService.findAll();
   }
   @Put(':id')
-  update(@Param('id') id: string, @Body() report: Partial<CreateReportDto>) {
+  update(@Param('id') id: string, @Body() report: Partial<AdminReports>) {
     return this.reportService.update(+id, report);
   }
 

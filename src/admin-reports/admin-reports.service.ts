@@ -12,7 +12,7 @@ export class AdminReportsService {
   ) {}
 
 
-      async create(user: CreateReportDto): Promise<CreateReportDto> {
+      async create(user: AdminReports): Promise<AdminReports> {
         this.adminReportsRepository.create(user);
         return this.adminReportsRepository.save(user);
       }
