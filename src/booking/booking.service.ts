@@ -1,0 +1,50 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Booking } from 'src/entities/bookings/bookings.entity';
+import { CreateBookingDto } from 'src/DTO/create-booking.dto';
+import { UpdateBookingDto } from 'src/DTO/update-booking.dto';
+
+@Injectable()
+export class BookingService {
+  constructor(
+    @InjectRepository(Booking)
+    private readonly bookingRepository: Repository<Booking>,
+  ) {}
+
+  async findAll(): Promise<Booking[]> {
+    return this.bookingRepository.find();
+  }
+
+  async findOne(id: number): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ where: { booking_id: id } });
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID ${id} not found`);
+    }
+    return booking;
+  }
+
+  async create(createBookingDto: CreateBookingDto): Promise<Booking> {
+    const booking = this.bookingRepository.create({
+      ...createBookingDto,
+      booking_date: new Date(createBookingDto.booking_date), 
+    });
+    return this.bookingRepository.save(booking);
+  }
+
+  async update(id: number, updateBookingDto: UpdateBookingDto): Promise<Booking> {
+    const booking = await this.findOne(id);
+    Object.assign(booking, {
+      ...updateBookingDto,
+      booking_date: updateBookingDto.booking_date ? new Date(updateBookingDto.booking_date) : booking.booking_date,
+    });
+    return this.bookingRepository.save(booking);
+  }
+
+  async delete(id: number): Promise<void> {
+    const result = await this.bookingRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Booking with ID ${id} not found`);
+    }
+  }
+}
