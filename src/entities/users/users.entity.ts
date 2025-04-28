@@ -52,7 +52,7 @@ export class User extends BaseEntity{
   created_at: Date;
 
   @OneToMany(() => AdminReports, (report) => report.admin_id)
-  adminReports: AdminReports[]; // Esplicita la proprietà adminReports
+  adminReports: AdminReports[];
 
   /*@OneToMany(() => ServiceProviders, (provider) => provider.user)
   service_providers: ServiceProviders[];*/

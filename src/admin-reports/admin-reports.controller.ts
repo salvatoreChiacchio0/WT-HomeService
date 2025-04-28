@@ -32,5 +32,8 @@ export class AdminReportsController {
   remove(@Param('id') id: string) {
     return this.reportService.delete(+id);
   }
-  
+  @Get('user/:id')
+  findAllReportFromUser(@Param('id') id: number) {
+    return this.reportService.findAllFromUser(id);
+  }
 }

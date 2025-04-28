@@ -20,11 +20,11 @@ export class AdminReports extends BaseEntity{
   @Column({})
   generated_at: Date;
   
-
+  @ApiProperty()
   @Column( {type: 'int'})
-  @ManyToOne(() => User, (user) => user.adminReports, { onDelete: 'CASCADE' }) // Relazione uno-a-molti
-  @JoinColumn({ name: 'admin_id' }) // Specifica il nome della colonna nella tabella
-  admin_id: User;
+  @ManyToOne(() => User, (user) => user.adminReports, { onDelete: 'CASCADE' }) 
+  @JoinColumn({ name: 'admin_id' }) 
+  admin_id: number;
   
 }
 
