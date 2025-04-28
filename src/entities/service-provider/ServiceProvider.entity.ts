@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from "typeorm";
 import { User } from "../users/users.entity";
+import { Service } from "../services/services.entity";
 @Entity('service_providers')
 export class ServiceProviders{
     @PrimaryGeneratedColumn()
@@ -8,7 +9,7 @@ export class ServiceProviders{
     
     @ApiProperty()
     @Column( {type: 'int'})
-    @ManyToOne(() => User, (user) => user.service_providers, { onDelete: 'CASCADE' }) 
+    @ManyToOne(() => User, (users) => users.service_providers, { onDelete: 'CASCADE' }) 
     @JoinColumn({ name: 'user_id' }) 
     user_id: number; 
 
@@ -31,6 +32,9 @@ export class ServiceProviders{
     @ApiProperty()
     @Column({nullable: true})
     pricing_model: string ;
+
+    @OneToMany(() => Service, (service) => service.provider_id)
+    service: Service[];
 
 
 }

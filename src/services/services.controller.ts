@@ -21,7 +21,7 @@ export class ServicesController {
   }
 
   @Post()
-  async create(@Body() createDto: CreateServiceDto): Promise<Service> {
+  async create(@Body() createDto: Service): Promise<Service> {
     return this.servicesService.create(createDto);
   }
 
@@ -35,4 +35,11 @@ export class ServicesController {
     await this.servicesService.delete(+id);
     return { message: `Service with ID ${id} deleted successfully` };
   }
+  //Dammi tutti i service dato un service provider id
+  @Get('ServiceProvider/:id')
+  async findAllServiceBySpId(@Param('id') id : number){
+    return this.servicesService.findAllServiceBySpId(id);
+  }
+
+
 }

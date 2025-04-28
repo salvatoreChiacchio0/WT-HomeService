@@ -53,8 +53,8 @@ export class User extends BaseEntity{
   created_at: Date;
 
   @OneToMany(() => AdminReports, (report) => report.admin_id)
-  adminReports: AdminReports[];
-
+  adminReports: AdminReports[]; 
+ 
   @OneToMany(() => ServiceProviders, (provider) => provider.user_id)
   service_providers: ServiceProviders[];
 }

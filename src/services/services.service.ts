@@ -16,6 +16,10 @@ export class ServicesService {
     return this.serviceRepository.find();
   }
 
+  async findAllServiceBySpId(id: number) : Promise<Service[]>{
+    return this.serviceRepository.find({ where: {provider_id: id}});
+  }
+
   async findOne(id: number): Promise<Service> {
     const service = await this.serviceRepository.findOne({ where: { service_id: id } });
     if (!service) {
@@ -24,7 +28,7 @@ export class ServicesService {
     return service;
   }
 
-  async create(createServiceDto: CreateServiceDto): Promise<Service> {
+  async create(createServiceDto: Service): Promise<Service> {
     const service = this.serviceRepository.create(createServiceDto);
     return this.serviceRepository.save(service);
   }
