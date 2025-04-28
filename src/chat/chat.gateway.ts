@@ -11,9 +11,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { chatDTO } from 'src/DTO/chat-dto';
 import { ChatService } from './chat.service';
 import { Message } from 'src/entities/chat/chat.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiBearerAuth()
 @WebSocketGateway()
@@ -25,23 +25,39 @@ export class ChatGateway
 
   private clientMap: Map<string, Socket> = new Map();
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @WebSocketServer() io: Server;
 
   afterInit() {
-    this.logger.log('Initialized');
+    this.logger.log('WebSocket Gateway initialized');
   }
 
-  handleConnection(client: Socket, ...args: any[]) {
-    const { sockets } = this.io.sockets;
+  async handleConnection(client: Socket, ...args: any[]) {
+    try {
+      const token = this.extractTokenFromHandshake(client);
+      if (!token) {
+        throw new Error('No token provided');
+      }
 
-    this.logger.log(`Client id: ${client.id} connected`);
-    this.logger.debug(`Number of connected clients: ${sockets.size}`);
+      const payload = await this.jwtService.verifyAsync(token);
+      const userId = payload.sub.toString(); 
+
+
+      this.clientMap.set(userId, client);
+
+      const { sockets } = this.io.sockets;
+      this.logger.debug(`Number of connected clients: ${sockets.size}`);
+    } catch (error) {
+      this.logger.error(`Authentication failed: ${error.message}`);
+      client.disconnect(true); 
+    }
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client id: ${client.id} disconnected`);
 
 
     for (const [userId, socket] of this.clientMap.entries()) {
@@ -53,30 +69,19 @@ export class ChatGateway
     }
   }
 
-  @SubscribeMessage('identify')
-  @ApiOperation({ summary: 'Identify the client with a user ID' })
-  @ApiBody({ description: 'id', type: String })
-  handleIdentify(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    this.clientMap.set(data.userId.toString(), client);
-
-    this.logger.log(`Client id: ${client.id} identified as user id: ${data.userId}`);
-
-    client.emit('identified', { message: 'Successfully identified.' });
-  }
-
-  @SubscribeMessage('chat')
+  @SubscribeMessage('send')
   @ApiOperation({ summary: 'Send a chat message' })
   @ApiBody({ type: () => Object })
   async handleMessage(@MessageBody() data: Partial<Message>, client: Socket) {
+
     data.sent_at = new Date();
     const message = await this.chatService.create(data);
 
-    this.sendToRecipient(message);
+
+    this.sendMSGtoReceiver(message);
   }
 
-  private sendToRecipient(message: Message) {
-
-    this.logger.debug(message)
+  private sendMSGtoReceiver(message: Message) {
     const receivedMsg = {
       id: message.message_id,
       message: message.message_text,
@@ -85,32 +90,32 @@ export class ChatGateway
       receiverId: message.receiver,
     };
 
-
-    this.logger.debug('Client map:', {
-      size: this.clientMap.size,
-      entries: Array.from(this.clientMap.entries()).map(([userId, socket]) => ({
-        userId,
-        socketId: socket.id,
-      })),
-    });
-    const recipientSocket = this.clientMap.get(
-      receivedMsg.receiverId.toString(),
-    );
+    this.logger.log(`Sending message to receiver: ${message.receiver}`);
+    const recipientSocket = this.clientMap.get(receivedMsg.receiverId.toString());
     if (recipientSocket) {
       recipientSocket.emit('receive', receivedMsg);
-      this.logger.log(
-        `Message sent to recipient id: ${receivedMsg.receiverId}`,
-      );
     } else {
-      this.logger.warn(
-        `Recipient with id ${receivedMsg.receiverId} is not connected.`,
-      );
+      this.logger.warn(`Recipient with id ${receivedMsg.receiverId} is not online`);
     }
   }
 
   @SubscribeMessage('receive')
   @ApiOperation({ summary: 'Receive a chat message' })
   handleReceive(@MessageBody() data: any) {
-    //metodo usato solo per la sottoscrizione non ci serve implementare niente
+    // Questo metodo è solo un placeholder per la sottoscrizione
+  }
+
+  private extractTokenFromHandshake(client: Socket): string | null {
+    const authHeader = client.handshake.headers.authorization;
+    if (!authHeader) {
+      return null;
+    }
+
+    const [type, token] = authHeader.split(' ');
+    if (type !== 'Bearer') {
+      return null;
+    }
+
+    return token;
   }
 }

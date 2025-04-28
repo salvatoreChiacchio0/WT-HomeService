@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, NotFoundException } from '@nestjs/common';
 import { ServiceProviderService } from './service-providers.service';
-import { ServiceProviders } from 'src/entities/users/ServiceProvider.entity';
+import { ServiceProviders } from 'src/entities/service-provider/ServiceProvider.entity';
 import { CreateServiceProviderDto } from 'src/DTO/create-service-provider.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('service-providers')
+@ApiBearerAuth()
 export class ServiceProvidersController {
   constructor(private readonly serviceProviderService: ServiceProviderService) {}
 

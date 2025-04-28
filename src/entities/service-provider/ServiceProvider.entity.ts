@@ -8,16 +8,16 @@ export class ServiceProviders{
     user_id: number; 
 
     @Column({nullable: true})
-    experiences_years: number | null;
+    experiences_years: number;
 
     @Column({type: 'numeric', precision: 5, scale: 2, nullable: true})
     rating: number | null 
 
     @Column({nullable: true})
-    availability: string | null;
+    availability: string ;
 
     @Column({nullable: true})
-    pricing_model: string | null;
+    pricing_model: string ;
 
 
 }

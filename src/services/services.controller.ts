@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { Service } from 'src/entities/users/services.entity';
+import { Service } from 'src/entities/services/services.entity';
 import { CreateServiceDto } from 'src/DTO/create-service.dto';
 import { UpdateServiceDto } from 'src/DTO/update-service.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('services')
+@ApiBearerAuth()
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 

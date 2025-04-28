@@ -2,9 +2,12 @@ import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common'
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from 'src/DTO/create-review.dto';
 import { UpdateReviewDto } from 'src/DTO/update-review.dto';
-import { Review } from 'src/entities/users/reviews.entity';
+import { Review } from 'src/entities/reviews/reviews.entity';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('reviews')
+@ApiBearerAuth()
+
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 

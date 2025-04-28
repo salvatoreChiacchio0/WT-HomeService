@@ -14,8 +14,23 @@ import { AdminReportsModule } from './admin-reports/admin-reports.module';
 import { AdminReports } from './entities/admin-reports/admin_reports.entity';
 import { ChatService } from './chat/chat.service';
 import { ChatModule } from './chat/chat.module';
+import { ServiceModule } from './services/service.module';
+
 import { ChatController } from './chat/chat.controller';
 import { Message } from './entities/chat/chat.entity';
+import { ServiceProvModule } from './service-provider/service-prov.module';
+
+import { ServiceProviders } from './entities/service-provider/ServiceProvider.entity';
+import { ReviewsModule } from './reviews/review.module';
+import { Review } from './entities/reviews/reviews.entity';
+import { ReviewsService } from './reviews/reviews.service';
+import { ServiceProviderService } from './service-provider/service-providers.service';
+import { ServicesService } from './services/services.service';
+import { ReviewsController } from './reviews/reviews.controller';
+import { ServiceProvidersController } from './service-provider/service-providers.controller';
+import { ServicesController } from './services/services.controller';
+import { Service } from './entities/services/services.entity';
+
 
 dotenv.config();
 
@@ -30,15 +45,14 @@ dotenv.config();
     }),
     UsersModule,
     AuthModule,
-    TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([AdminReports]),
-    TypeOrmModule.forFeature([Message]),
-
-    AdminReportsModule,
+    TypeOrmModule.forFeature([User,AdminReports,Message,ServiceProviders,Review,Service]),
+    ReviewsModule,
+    ServiceProvModule,
+    ServiceModule,
     AdminReportsModule,
     ChatModule
   ],
-  controllers: [UsersController, AuthController,ChatController],
-  providers: [UsersService, AuthService, ChatService],
+  controllers: [UsersController, AuthController,ChatController,ReviewsController,ServiceProvidersController,ServicesController],
+  providers: [UsersService, AuthService, ChatService,ReviewsService,ServiceProviderService,ServicesService],
 })
 export class AppModule {}
