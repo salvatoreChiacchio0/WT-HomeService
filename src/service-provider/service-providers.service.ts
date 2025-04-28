@@ -23,6 +23,11 @@ export class ServiceProviderService {
   async findAll(): Promise<ServiceProviders[]> {
     return this.serviceProviderRepository.find();
   }
+  
+  async findAllByName(name:string): Promise<ServiceProviders[]> {
+
+    return this.serviceProviderRepository.find({ where: { name:name }});
+  }
 
   async create(data: Partial<ServiceProviders>): Promise<ServiceProviders> {
     const provider = this.serviceProviderRepository.create(data);
@@ -30,7 +35,7 @@ export class ServiceProviderService {
   }
 
   async update(id: number, data: Partial<ServiceProviders>): Promise<ServiceProviders> {
-    const provider = await this.findOne(id); // Riusa findOne per gestire il caso 'not found'
+    const provider = await this.findOne(id); 
     Object.assign(provider, data);
     return this.serviceProviderRepository.save(provider);
   }

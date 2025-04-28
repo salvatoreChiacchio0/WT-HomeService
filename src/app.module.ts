@@ -30,6 +30,8 @@ import { ReviewsController } from './reviews/reviews.controller';
 import { ServiceProvidersController } from './service-provider/service-providers.controller';
 import { ServicesController } from './services/services.controller';
 import { Service } from './entities/services/services.entity';
+import { ConfigModule } from '@nestjs/config';
+import { RedisModule } from './redis/redis.module';
 
 
 dotenv.config();
@@ -50,7 +52,9 @@ dotenv.config();
     ServiceProvModule,
     ServiceModule,
     AdminReportsModule,
-    ChatModule
+    ChatModule,
+    ConfigModule.forRoot(),
+    RedisModule,
   ],
   controllers: [UsersController, AuthController,ChatController,ReviewsController,ServiceProvidersController,ServicesController],
   providers: [UsersService, AuthService, ChatService,ReviewsService,ServiceProviderService,ServicesService],

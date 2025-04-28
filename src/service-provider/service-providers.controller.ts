@@ -23,6 +23,13 @@ export class ServiceProvidersController {
     return serviceProvider;
   }
 
+  @Get('/findByName/:name')
+  async findByName(@Param('name') name: string): Promise<ServiceProviders[]> {
+    const serviceProviders = await this.serviceProviderService.findAllByName(name);
+
+    return serviceProviders;
+  }
+
   @Post()
   async create(@Body() createDto: CreateServiceProviderDto): Promise<ServiceProviders> {
     return this.serviceProviderService.create(createDto);

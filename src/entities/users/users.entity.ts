@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, BaseEntity } from 'typeorm';
 import { AdminReports } from '../admin-reports/admin_reports.entity';
+import { ServiceProviders } from '../service-provider/ServiceProvider.entity';
 // import { ServiceProviders } from './service-providers.entity';
 
 export enum Role {
@@ -54,7 +55,7 @@ export class User extends BaseEntity{
   @OneToMany(() => AdminReports, (report) => report.admin_id)
   adminReports: AdminReports[];
 
-  /*@OneToMany(() => ServiceProviders, (provider) => provider.user)
-  service_providers: ServiceProviders[];*/
+  @OneToMany(() => ServiceProviders, (provider) => provider.user_id)
+  service_providers: ServiceProviders[];
 }
 

@@ -14,6 +14,8 @@ import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { Message } from 'src/entities/chat/chat.entity';
 import { JwtService } from '@nestjs/jwt';
+import { Inject } from '@nestjs/common';
+import { createClient } from 'redis';
 
 @ApiBearerAuth()
 @WebSocketGateway()
@@ -26,6 +28,7 @@ export class ChatGateway
   private clientMap: Map<string, Socket> = new Map();
 
   constructor(
+    @Inject('REDIS_CLIENT') private readonly redisClient,
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
   ) {}
@@ -42,30 +45,34 @@ export class ChatGateway
       if (!token) {
         throw new Error('No token provided');
       }
-
+  
       const payload = await this.jwtService.verifyAsync(token);
-      const userId = payload.sub.toString(); 
-
-
-      this.clientMap.set(userId, client);
-
+      const userId = payload.sub.toString();
+  
+      await this.redisClient.set(`user:${userId}`, client.id, {
+        EX: 1800, //30 min exp
+      });
+  
       const { sockets } = this.io.sockets;
       this.logger.debug(`Number of connected clients: ${sockets.size}`);
     } catch (error) {
       this.logger.error(`Authentication failed: ${error.message}`);
-      client.disconnect(true); 
+      client.disconnect(true);
     }
   }
 
-  handleDisconnect(client: Socket) {
-
-
-    for (const [userId, socket] of this.clientMap.entries()) {
-      if (socket === client) {
-        this.clientMap.delete(userId);
-        this.logger.log(`Removed user id: ${userId} from client map`);
-        break;
+  async handleDisconnect(client: Socket) {
+    try {
+      for (const key of await this.redisClient.keys('user:*')) {
+        const socketId = await this.redisClient.get(key);
+        if (socketId === client.id) {
+          await this.redisClient.del(key); // Rimuovi il client da Redis
+          this.logger.log(`Removed user id: ${key.split(':')[1]} from Redis`);
+          break;
+        }
       }
+    } catch (error) {
+      this.logger.error(`Error during disconnect: ${error.message}`);
     }
   }
 
@@ -81,7 +88,7 @@ export class ChatGateway
     this.sendMSGtoReceiver(message);
   }
 
-  private sendMSGtoReceiver(message: Message) {
+  private async sendMSGtoReceiver(message: Message) {
     const receivedMsg = {
       id: message.message_id,
       message: message.message_text,
@@ -89,11 +96,12 @@ export class ChatGateway
       senderId: message.sender,
       receiverId: message.receiver,
     };
-
+  
     this.logger.log(`Sending message to receiver: ${message.receiver}`);
-    const recipientSocket = this.clientMap.get(receivedMsg.receiverId.toString());
-    if (recipientSocket) {
-      recipientSocket.emit('receive', receivedMsg);
+  
+    const recipientSocketId = await this.redisClient.get(`user:${receivedMsg.receiverId}`);
+    if (recipientSocketId) {
+      this.io.to(recipientSocketId).emit('receive', receivedMsg); 
     } else {
       this.logger.warn(`Recipient with id ${receivedMsg.receiverId} is not online`);
     }
