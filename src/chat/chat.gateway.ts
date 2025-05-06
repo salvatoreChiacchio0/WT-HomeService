@@ -15,7 +15,6 @@ import { ChatService } from './chat.service';
 import { Message } from 'src/entities/chat/chat.entity';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
-import { createClient } from 'redis';
 
 @ApiBearerAuth()
 @WebSocketGateway()
@@ -66,7 +65,7 @@ export class ChatGateway
       for (const key of await this.redisClient.keys('user:*')) {
         const socketId = await this.redisClient.get(key);
         if (socketId === client.id) {
-          await this.redisClient.del(key); // Rimuovi il client da Redis
+          await this.redisClient.del(key); 
           this.logger.log(`Removed user id: ${key.split(':')[1]} from Redis`);
           break;
         }

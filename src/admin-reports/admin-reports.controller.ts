@@ -8,12 +8,12 @@ import { AdminReports } from 'src/entities/admin-reports/admin_reports.entity';
 
 @Controller('admin-reports')
 @ApiBearerAuth()
+@Roles(Role.Admin)
 export class AdminReportsController {
 
     constructor(private readonly reportService: AdminReportsService) {}
   
     @Post()
-    @Roles(Role.Admin)
     create(@Body() createReport: AdminReports) {
         this.reportService.create(createReport)
     }
