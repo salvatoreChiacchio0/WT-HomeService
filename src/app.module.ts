@@ -32,7 +32,10 @@ import { ServicesController } from './services/services.controller';
 import { Service } from './entities/services/services.entity';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
-
+import { BookingModule } from './booking/booking.module';
+import { BookingController } from './booking/booking.controller';
+import { BookingService } from './booking/booking.service';
+import { Booking } from './entities/bookings/bookings.entity';
 
 dotenv.config();
 
@@ -47,7 +50,7 @@ dotenv.config();
     }),
     AuthModule,
     UsersModule,
-    TypeOrmModule.forFeature([User,AdminReports,Message,ServiceProviders,Review,Service]),
+    TypeOrmModule.forFeature([User,AdminReports,Message,ServiceProviders,Review,Service,Booking]),
     ReviewsModule,
     ServiceProvModule,
     ServiceModule,
@@ -55,8 +58,25 @@ dotenv.config();
     ChatModule,
     ConfigModule.forRoot(),
     RedisModule,
+    BookingModule,
   ],
-  controllers: [UsersController, AuthController,ChatController,ReviewsController,ServiceProvidersController,ServicesController],
-  providers: [UsersService, AuthService, ChatService,ReviewsService,ServiceProviderService,ServicesService],
+  controllers: [
+    UsersController, 
+    AuthController,
+    ChatController,
+    ReviewsController,
+    ServiceProvidersController,
+    ServicesController,
+    BookingController
+  ],
+  providers: [
+    UsersService, 
+    AuthService, 
+    ChatService,
+    ReviewsService,
+    ServiceProviderService,
+    ServicesService,
+    BookingService
+  ],
 })
 export class AppModule {}

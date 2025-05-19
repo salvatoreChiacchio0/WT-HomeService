@@ -3,7 +3,7 @@ import { ServicesService } from './services.service';
 import { Service } from 'src/entities/services/services.entity';
 import { CreateServiceDto } from 'src/DTO/create-service.dto';
 import { UpdateServiceDto } from 'src/DTO/update-service.dto';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SearchServiceDto } from 'src/DTO/search-service.dto';
 
 @Controller('services')
@@ -17,31 +17,40 @@ export class ServicesController {
     return this.servicesService.findAll();
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Service> {
-    return this.servicesService.findOne(+id);
-  }
-  
+  @ApiOperation({ summary: 'Search services with optional filters' })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'serviceCategory', required: false, type: String })
+  @ApiQuery({ name: 'price', required: false, type: Number })
+  @ApiQuery({ name: 'rating', required: false, type: Number })
+  @ApiQuery({ name: 'availability', required: false, type: Boolean })
   @Get('search')
-
   async search(
     @Query('name') name?: string,
     @Query('serviceCategory') serviceCategory?: string,
     @Query('price') price?: number,
     @Query('rating') rating?: number,
     @Query('availability') availability?: boolean,
-
   ): Promise<Service[]> {
-
+    this.logger.debug(`Search params - name: ${name}, category: ${serviceCategory}, price: ${price}, rating: ${rating}, availability: ${availability}`);
+    
     const searchDTO = new SearchServiceDto();
     searchDTO.name = name;
     searchDTO.serviceCategory = serviceCategory;
     searchDTO.price = price;
     searchDTO.rating = rating;
     searchDTO.availability = availability;
-    this.logger.log(searchDTO);
-    return []
-    //return this.servicesService.search(filters);
+    
+    return this.servicesService.search(searchDTO);
+  }
+
+  @Get('ServiceProvider/:id')
+  async findAllServiceBySpId(@Param('id') id: number) {
+    return this.servicesService.findAllServiceBySpId(id);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Service> {
+    return this.servicesService.findOne(+id);
   }
   
   @Post()
@@ -59,11 +68,4 @@ export class ServicesController {
     await this.servicesService.delete(+id);
     return { message: `Service with ID ${id} deleted successfully` };
   }
-  //Dammi tutti i service dato un service provider id
-  @Get('ServiceProvider/:id')
-  async findAllServiceBySpId(@Param('id') id : number){
-    return this.servicesService.findAllServiceBySpId(id);
-  }
-
-
 }

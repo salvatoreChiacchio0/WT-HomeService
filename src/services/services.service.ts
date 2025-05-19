@@ -25,32 +25,48 @@ export class ServicesService {
   }
 
   async search(filters: SearchServiceDto): Promise<Service[]> {
-    this.logger.log(filters);
+    this.logger.debug('Starting search with filters:', JSON.stringify(filters, null, 2));
+    
     const query = this.serviceRepository.createQueryBuilder('service');
 
     if (filters.name) {
-      query.andWhere('LOWER(service.name) LIKE LOWER(:name)', { name: `%${filters.name}%` });
+      this.logger.debug(`Adding name filter: ${filters.name}`);
+      query.andWhere('LOWER(service.service_name) LIKE LOWER(:name)', { 
+        name: `%${filters.name}%` 
+      });
     }
 
     if (filters.serviceCategory) {
+      this.logger.debug(`Adding category filter: ${filters.serviceCategory}`);
       query.andWhere('service.serviceCategory = :serviceCategory', {
         serviceCategory: filters.serviceCategory,
       });
     }
-    /*
-    if (filters.price !== undefined) {
+
+    if (filters.price !== undefined && filters.price !== null) {
+      this.logger.debug(`Adding price filter: ${filters.price}`);
       query.andWhere('service.price <= :price', { price: filters.price });
     }
 
-    if (filters.rating !== undefined) {
-      query.andWhere('service.range >= :range', { range: filters.rating });
+    if (filters.rating !== undefined && filters.rating !== null) {
+      this.logger.debug(`Adding rating filter: ${filters.rating}`);
+      query.andWhere('service.rating >= :rating', { rating: filters.rating });
     }
 
-    if (filters.availability !== undefined) {
-      query.andWhere('service.availability = :availability', { availability: filters.availability });
-    }*/
+    if (filters.availability !== undefined && filters.availability !== null) {
+      this.logger.debug(`Adding availability filter: ${filters.availability}`);
+      query.andWhere('service.availability = :availability', { 
+        availability: filters.availability 
+      });
+    }
 
-    return query.getMany();
+    const sql = query.getSql();
+    this.logger.debug('Generated SQL query:', sql);
+    
+    const results = await query.getMany();
+    this.logger.debug(`Search returned ${results.length} results`);
+    
+    return results;
   }
   
   async findOne(id: number): Promise<Service> {

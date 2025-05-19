@@ -1,30 +1,29 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, IsNumber, IsBoolean, isNumber } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
 
 export class SearchServiceDto {
-
-    @ApiProperty()
+    @ApiProperty({ required: false, nullable: true })
     @IsOptional()
     @IsString()
-     name?: string;
+    name?: string | null;
 
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-     serviceCategory?: string;
+    @ApiProperty({ required: false, nullable: true })
+    @IsOptional()
+    @IsString()
+    serviceCategory?: string | null;
 
-  
-  @ApiProperty()
-  @IsOptional()
-  @IsNumber()
-  price?: Number;
+    @ApiProperty({ required: false, nullable: true })
+    @IsOptional()
+    @IsNumber()
+    price?: number | null;
 
-  @ApiProperty()
-  @IsOptional()
-  @IsNumber()
-  rating?: Number;
-  @ApiProperty()
-  @IsOptional()
-  @IsBoolean()
-  availability?: boolean;
+    @ApiProperty({ required: false, nullable: true })
+    @IsOptional()
+    @IsNumber()
+    rating?: number | null;
+
+    @ApiProperty({ required: false, nullable: true })
+    @IsOptional()
+    @IsBoolean()
+    availability?: boolean | null;
 }
