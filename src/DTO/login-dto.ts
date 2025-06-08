@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmpty, IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { User } from 'src/entities/users/users.entity';
+import { ServiceProviders } from 'src/entities/service-provider/ServiceProvider.entity';
 
 export class LoginDto {
   @ApiProperty({example:"salvatore@sasy.com"})
@@ -20,6 +21,8 @@ export class LoginDTOResponse{
   readonly accessToken :string;
 
   @ApiProperty()
-  readonly user: Partial<User>
+  readonly user: Partial<User> & {
+    provider_info?: Partial<ServiceProviders>;
+  }
 }
 

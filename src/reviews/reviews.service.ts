@@ -47,4 +47,8 @@ export class ReviewsService {
       throw new NotFoundException(`Review with ID ${id} not found`);
     }
   }
+
+  async findByUserId(userId: number): Promise<Review[]> {
+    return this.reviewRepository.find({ where: { user_id: userId } });
+  }
 }

@@ -24,6 +24,15 @@ export class BookingService {
     return booking;
   }
 
+  async findByUserId(id: number): Promise<Booking[]> {
+    const bookings = await this.bookingRepository.find({ where: { user_id: id } });
+    if (!bookings) {
+      throw new NotFoundException(`Booking for user ID ${id} not found`);
+    }
+    return bookings;
+  }
+  
+
   async create(createBookingDto: CreateBookingDto): Promise<Booking> {
     const booking = this.bookingRepository.create({
       ...createBookingDto,

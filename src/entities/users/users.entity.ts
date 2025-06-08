@@ -8,7 +8,8 @@ import { Review } from '../reviews/reviews.entity';
 export enum Role {
   Customer = "customer",
   Admin = "admin",
-  User = "user"
+  User = "user",
+  Provider = "provider"
 }
 
 @Entity({name:"User",comment:"class of the generic user",schema:"public"})
@@ -31,7 +32,7 @@ export class User extends BaseEntity{
   
   @ApiProperty()
   @Column({ type: 'enum', enum: Role })
-  role: Role[];
+  role: Role;
   
   @ApiProperty()
   @Column()
@@ -48,6 +49,10 @@ export class User extends BaseEntity{
   @ApiProperty()
   @Column({ nullable: true })
   address: string;
+  
+  @ApiProperty()
+  @Column({ type: 'text', nullable: true })
+  profile_image: string;
   
   @ApiProperty()
   @Column({ default: () => 'CURRENT_TIMESTAMP' })

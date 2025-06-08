@@ -36,4 +36,9 @@ export class ReviewsController {
     await this.reviewsService.delete(+id);
     return { message: `Review with ID ${id} deleted successfully` };
   }
+
+  @Get('user/:id')
+  async findByUserId(@Param('id') id: string): Promise<Review[]> {  
+    return this.reviewsService.findByUserId(+id);
+  }
 }

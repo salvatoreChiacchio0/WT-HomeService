@@ -7,13 +7,19 @@ import {
     Param,
     Post,
     Request,
-    UseGuards
+    UseGuards,
+    UseInterceptors,
+    UploadedFile,
+    ParseFilePipe,
+    MaxFileSizeValidator,
+    FileTypeValidator
   } from '@nestjs/common';
-  import { AuthGuard } from './auth.guard';
-  import { AuthService } from './auth.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthGuard } from './auth.guard';
+import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 import { Public } from './decorators/public.decorators';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { LoginDto } from 'src/DTO/login-dto';
 import { User } from 'src/entities/users/users.entity';
   
@@ -25,16 +31,34 @@ import { User } from 'src/entities/users/users.entity';
     @ApiOperation({ summary: 'Login into HomeService'})
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    signIn(@Body() signInDto: LoginDto) {
+    async signIn(@Body() signInDto: LoginDto) {
       return this.authService.signIn(signInDto.email, signInDto.password);
     }
 
     @Public()
     @ApiOperation({ summary: 'Register into HomeService'})
-    @HttpCode(HttpStatus.OK)
+    @ApiConsumes('multipart/form-data')
+    @HttpCode(HttpStatus.CREATED)
     @Post('sign-up')
-    signUp(@Body() user: User) {
-      return this.authService.signUp(user);
+    @UseInterceptors(FileInterceptor('profile_photo'))
+    async signUp(
+      @Body() userData: any,
+      @UploadedFile(
+        new ParseFilePipe({
+          validators: [
+            new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+            new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
+          ],
+          fileIsRequired: false,
+        }),
+      )
+      file?: Express.Multer.File,
+    ) {
+      if (file) {
+        userData.profile_photo = file.buffer;
+      }
+      console.log("signup",userData)
+      return this.authService.signUp(userData);
     }
 
   }

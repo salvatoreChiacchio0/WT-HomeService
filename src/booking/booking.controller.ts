@@ -18,6 +18,12 @@ export class BookingController {
     return this.bookingsService.findOne(+id);
   }
 
+  @Get('/user/:id')
+  async findByUserId(@Param('id') id: string): Promise<Booking[]> {
+    return this.bookingsService.findByUserId(+id);
+  }
+
+
   @Post()
   async create(@Body() createDto: CreateBookingDto): Promise<Booking> {
     return this.bookingsService.create(createDto);

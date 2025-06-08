@@ -7,8 +7,9 @@ import { ChatService } from './chat.service';
 import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Message]),RedisModule],
+  imports: [TypeOrmModule.forFeature([Message]), RedisModule],
   controllers: [ChatController],
-  providers:[ChatGateway,ChatService]
+  providers: [ChatGateway, ChatService],
+  exports: [ChatService, TypeOrmModule]
 })
 export class ChatModule {}

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Review } from 'src/entities/reviews/reviews.entity';
+import { Review } from '../entities/reviews/reviews.entity';
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 
@@ -8,6 +8,6 @@ import { ReviewsService } from './reviews.service';
   imports: [TypeOrmModule.forFeature([Review])],
   controllers: [ReviewsController],
   providers: [ReviewsService],
-  exports: [ReviewsService],
+  exports: [ReviewsService, TypeOrmModule]
 })
-export class ReviewsModule {}
+export class ReviewsModule {} 
