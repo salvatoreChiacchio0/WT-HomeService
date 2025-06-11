@@ -84,7 +84,7 @@ export class RecommendationService {
     let score = 0;
 
     // Rating del provider (dalla cache)
-    const rating = providerRatingsMap.get(service.provider_id);
+    const rating = providerRatingsMap.get(service.provider.provider_id);
     if (typeof rating === 'number') {
       score += rating * 1;
     }
@@ -96,7 +96,7 @@ export class RecommendationService {
     score += Math.min(bookingCount, 3);
 
     // Preferenze utente per provider
-    if (userProviderPreferences[service.provider_id]) {
+    if (userProviderPreferences[service.provider.provider_id]) {
       score += 2;
     }
 
@@ -134,7 +134,7 @@ export class RecommendationService {
     services: Service[],
   ): Promise<Map<number, number>> {
     const uniqueProviderIds = [
-      ...new Set(services.map((s) => s.provider_id)),
+      ...new Set(services.map((s) => s.provider.provider_id)),
     ].filter(Boolean);
 
     // Carica tutti i rating in batch (con cache)

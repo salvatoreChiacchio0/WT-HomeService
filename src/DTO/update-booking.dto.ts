@@ -1,4 +1,5 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsDateString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateBookingDto {
   @IsOptional()
@@ -14,8 +15,9 @@ export class UpdateBookingDto {
   service_id?: number;
 
   @IsOptional()
-  @IsString()
-  booking_date?: string;
+  @IsDateString()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
+  booking_date?: Date;
 
   @IsOptional()
   @IsString()

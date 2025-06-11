@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import { ServiceProviders } from "./ServiceProvider.entity";
+import { ServiceProviders } from "./ServiceProviders.entity";
 
 @Entity('provider_images')
 export class ProviderImage {

@@ -13,11 +13,16 @@ export class ReviewsService {
   ) {}
 
   async findAll(): Promise<Review[]> {
-    return this.reviewRepository.find();
+    return this.reviewRepository.find({
+      relations: ['customer', 'provider', 'booking']
+    });
   }
 
   async findOne(id: number): Promise<Review> {
-    const review = await this.reviewRepository.findOne({ where: { review_id: id } });
+    const review = await this.reviewRepository.findOne({ 
+      where: { review_id: id },
+      relations: ['customer', 'provider', 'booking']
+    });
     if (!review) {
       throw new NotFoundException(`Review with ID ${id} not found`);
     }
@@ -49,6 +54,24 @@ export class ReviewsService {
   }
 
   async findByUserId(userId: number): Promise<Review[]> {
-    return this.reviewRepository.find({ where: { user_id: userId } });
+    return this.reviewRepository.find({ 
+      where: { customer_id: userId },
+      relations: ['customer', 'provider', 'booking']
+    });
+  }
+
+    async findByProviderId(userId: number): Promise<Review[]> {
+    return this.reviewRepository.find({ 
+      where: { provider_id: userId },
+      relations: ['customer', 'provider', 'booking']
+    });
+  }
+
+  async findByBookingId(bookingId: number): Promise<Review[]> {
+    return this.reviewRepository.find({ 
+      where: { booking_id: bookingId },
+      relations: ['customer', 'provider', 'booking'],
+      order: { created_at: 'DESC' }
+    });
   }
 }

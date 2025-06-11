@@ -13,11 +13,13 @@ export class ServiceProviders {
     @PrimaryGeneratedColumn()
     provider_id: number;
     
-    @ApiProperty()
     @Column({ type: 'int' })
+    user_id: number;
+
+    @ApiProperty()
     @ManyToOne(() => User, (users) => users.service_providers, { onDelete: 'CASCADE' }) 
     @JoinColumn({ name: 'user_id' }) 
-    user_id: number; 
+    user: User;
 
     @ApiProperty()
     @Column({ nullable: true })
@@ -39,14 +41,14 @@ export class ServiceProviders {
     @Column({ nullable: true })
     pricing_model: string;
 
-    @OneToMany(() => Service, (service) => service.provider_id)
-    service: Service[];
+    @OneToMany(() => Service, (service) => service.provider)
+    services: Service[];
 
-    @OneToMany(() => Booking, (booking) => booking.provider_id)
-    booking: Booking[];
+    @OneToMany(() => Booking, (booking) => booking.provider)
+    bookings: Booking[];
 
-    @OneToMany(() => Review, (review) => review.provider_id)
-    review: Review[];
+    @OneToMany(() => Review, (review) => review.provider)
+    reviews: Review[];
 
     @OneToMany(() => ProviderImage, (image: ProviderImage) => image.provider_id)
     images: ProviderImage[];

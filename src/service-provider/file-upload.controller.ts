@@ -87,10 +87,16 @@ export class FileUploadController {
             return;
         }
 
-        const fileStream = await this.fileUploadService.getFileStream(certificate.file_path);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${certificate.file_name}"`);
-        fileStream.pipe(res);
+        try {
+            const fileStream = await this.fileUploadService.getFileStream(certificate.file_path);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${certificate.file_name}"`);
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Pragma', 'no-cache');
+            fileStream.pipe(res);
+        } catch (error) {
+            res.status(500).send('Error retrieving certificate');
+        }
     }
 
     @Delete('image/:imageId')

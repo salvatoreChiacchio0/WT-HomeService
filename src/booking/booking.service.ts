@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from 'src/entities/bookings/bookings.entity';
@@ -34,19 +34,29 @@ export class BookingService {
   
 
   async create(createBookingDto: CreateBookingDto): Promise<Booking> {
+    if (!createBookingDto.booking_date) {
+      throw new BadRequestException('Booking date is required');
+    }
+
     const booking = this.bookingRepository.create({
       ...createBookingDto,
-      booking_date: new Date(createBookingDto.booking_date), 
+      booking_date: createBookingDto.booking_date instanceof Date 
+        ? createBookingDto.booking_date 
+        : new Date(createBookingDto.booking_date)
     });
     return this.bookingRepository.save(booking);
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto): Promise<Booking> {
     const booking = await this.findOne(id);
-    Object.assign(booking, {
-      ...updateBookingDto,
-      booking_date: updateBookingDto.booking_date ? new Date(updateBookingDto.booking_date) : booking.booking_date,
-    });
+    
+    if (updateBookingDto.booking_date) {
+      updateBookingDto.booking_date = updateBookingDto.booking_date instanceof Date 
+        ? updateBookingDto.booking_date 
+        : new Date(updateBookingDto.booking_date);
+    }
+
+    Object.assign(booking, updateBookingDto);
     return this.bookingRepository.save(booking);
   }
 
@@ -55,5 +65,14 @@ export class BookingService {
     if (result.affected === 0) {
       throw new NotFoundException(`Booking with ID ${id} not found`);
     }
+  }
+    async findByServiceProvider(provider_id: number): Promise<Booking[]> {
+    return this.bookingRepository.find({
+      where: { provider_id },
+      relations: ['service', 'reviews', 'provider'],
+      order: {
+        booking_date: 'DESC'
+      }
+    });
   }
 }

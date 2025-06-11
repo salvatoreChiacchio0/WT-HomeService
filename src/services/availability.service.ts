@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { ProviderAvailability } from '../entities/service-provider/ProviderAvailability.entity';
-import { ServiceProviders } from '../entities/service-provider/ServiceProvider.entity';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
 
 @Injectable()
 export class AvailabilityService {

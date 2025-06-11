@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { ServiceProviders } from '../service-provider/ServiceProvider.entity';
+import { ServiceProviders } from '../service-provider/ServiceProviders.entity';
 import { Booking } from '../bookings/bookings.entity';
 
 @Entity('services')
@@ -58,17 +58,18 @@ export class Service {
   };
 
   @ApiProperty()
-  @Column()
+  @Column({ nullable: true })
   service_category: string;
 
   @ApiProperty()
-  @Column({ type: 'int' })
-  @ManyToOne(() => ServiceProviders, (serviceProvider) => serviceProvider.service, { onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'provider_id'})
+  @Column({ name: 'provider_id', type: 'int', nullable: false })
   provider_id: number;
 
-  @OneToMany(() => Booking, (booking) => booking.service_id)
-  booking: Booking[];
+  @ManyToOne(() => ServiceProviders, (provider) => provider.services)
+  @JoinColumn({ name: 'provider_id' })
+  provider: ServiceProviders;
 
+  @OneToMany(() => Booking, (booking) => booking.service)
+  bookings: Booking[];
 
 }

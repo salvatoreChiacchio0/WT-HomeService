@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Service } from '../entities/services/services.entity';
-import { ServiceProviders } from '../entities/service-provider/ServiceProvider.entity';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
 import { ServicesController } from './services.controller';
 import { ServicesService } from './services.service';
 import { AdvancedSearchService } from './advanced-search.service';

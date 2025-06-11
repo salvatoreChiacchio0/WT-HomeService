@@ -41,4 +41,13 @@ export class ReviewsController {
   async findByUserId(@Param('id') id: string): Promise<Review[]> {  
     return this.reviewsService.findByUserId(+id);
   }
+    @Get('provider/:id')
+  async findByProvidderId(@Param('id') id: string): Promise<Review[]> {  
+    return this.reviewsService.findByProviderId(+id);
+  }
+
+  @Get('booking/:id')
+  async findByBookingId(@Param('id') id: string): Promise<Review[]> {
+    return this.reviewsService.findByBookingId(+id);
+  }
 }

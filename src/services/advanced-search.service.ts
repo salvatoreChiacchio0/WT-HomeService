@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Like, In } from 'typeorm';
 import { Service } from '../entities/services/services.entity';
-import { ServiceProviders } from '../entities/service-provider/ServiceProvider.entity';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
 
 @Injectable()
 export class AdvancedSearchService {

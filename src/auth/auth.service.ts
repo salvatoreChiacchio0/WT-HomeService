@@ -5,7 +5,7 @@ import { LoginDTOResponse } from 'src/DTO/login-dto';
 import { User, Role } from 'src/entities/users/users.entity';
 import { SignupDTOResponse } from 'src/DTO/signup-dto';
 import { ServiceProviderService } from '../service-provider/service-providers.service';
-import { ServiceProviders } from 'src/entities/service-provider/ServiceProvider.entity';
+import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders.entity';
 
 @Injectable()
 export class AuthService {
@@ -61,6 +61,7 @@ export class AuthService {
         throw new Error(`User not created`);
       }
 
+      console.log("here")
       // If user is a provider, create provider information
       if (userData.role === Role.Provider) {
         const providerData: Partial<ServiceProviders> = {
@@ -74,6 +75,7 @@ export class AuthService {
         // Create the provider record
         const provider = await this.serviceProviderService.create(providerData);
       }
+      console.log("here2")
 
       return {
         message: "User created successfully",
