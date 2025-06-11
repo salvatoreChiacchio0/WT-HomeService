@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsArray } from 'class-validator';
+
 export class CreateServiceProviderDto {
 
 @ApiProperty()
@@ -29,4 +30,10 @@ name: string;
 @IsOptional()
 @IsString()
 pricing_model?: string;
+
+@ApiProperty({ type: [String], required: false })
+@IsOptional()
+@IsArray()
+@IsString({ each: true })
+serviceCategories?: string[];
 }

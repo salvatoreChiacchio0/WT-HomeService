@@ -41,6 +41,14 @@ export class ServiceProviders {
     @Column({ nullable: true })
     pricing_model: string;
 
+    @ApiProperty()
+    @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
+    hourly_rate: number | null;
+
+    @ApiProperty()
+    @Column({ type: 'json', nullable: true })
+    service_categories: string[];
+
     @OneToMany(() => Service, (service) => service.provider)
     services: Service[];
 

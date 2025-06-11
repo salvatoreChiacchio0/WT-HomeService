@@ -48,9 +48,27 @@ export class ServiceProviderService {
     });
   }
 
-  async create(data: Partial<ServiceProviders>): Promise<ServiceProviders> {
-    const provider = this.serviceProviderRepository.create(data);
-    return this.serviceProviderRepository.save(provider);
+  async create(data: CreateServiceProviderDto | Partial<ServiceProviders>): Promise<ServiceProviders> {
+    const providerData = { ...data };
+    let serviceCategories: string[] = [];
+
+    if ('serviceCategories' in data) {
+      serviceCategories = data.serviceCategories || [];
+    } else if ('service_categories' in data) {
+      serviceCategories = data.service_categories || [];
+    }
+
+    const provider = this.serviceProviderRepository.create({
+      ...providerData,
+      service_categories: serviceCategories
+    });
+    const savedProvider = await this.serviceProviderRepository.save(provider);
+    
+    if (serviceCategories.length > 0) {
+      await this.addServices(savedProvider.provider_id, serviceCategories);
+    }
+    
+    return this.findOne(savedProvider.provider_id);
   }
 
   async update(id: number, data: Partial<ServiceProviders>): Promise<ServiceProviders> {
@@ -85,35 +103,37 @@ export class ServiceProviderService {
   }
 
   async search(filters: SearchProviderDto): Promise<ServiceProviders[]> {
-    this.logger.log('Search filters:', filters);
-    const query = this.serviceProviderRepository.createQueryBuilder('provider');
+    const query = this.serviceProviderRepository.createQueryBuilder('provider')
+      .leftJoinAndSelect('provider.services', 'services')
+      .leftJoinAndSelect('provider.reviews', 'reviews')
+      .leftJoinAndSelect('provider.user', 'user');
 
     if (filters.query) {
-      query.andWhere('(LOWER(provider.name) LIKE LOWER(:query))', 
+      query.andWhere('(LOWER(provider.name) LIKE LOWER(:query) OR LOWER(services.service_name) LIKE LOWER(:query))', 
         { query: `%${filters.query}%` });
     }
 
-    if (filters.experience !== undefined && filters.experience !== null) {
-      const experience = Number(filters.experience);
-      if (!isNaN(experience)) {
-        query.andWhere('provider.experience = :experience', { experience });
-      }
+    if (filters.experience) {
+      query.andWhere('provider.experience_years >= :experience', { experience: filters.experience });
     }
 
-    if (filters.minRating !== undefined && filters.minRating !== null) {
-      const rating = Number(filters.minRating);
-      if (!isNaN(rating)) {
-        query.andWhere('provider.rating >= :minRating', { minRating: rating });
-      }
+    if (filters.minRating) {
+      query.andWhere('provider.rating >= :minRating', { minRating: filters.minRating });
     }
 
     if (filters.location) {
-      query.andWhere('LOWER(provider.availability->>\'location\') LIKE LOWER(:location)', 
+      query.andWhere('LOWER(services.location) LIKE LOWER(:location)', 
         { location: `%${filters.location}%` });
     }
 
     if (filters.serviceType) {
-      query.andWhere('provider.service_type = :serviceType', { serviceType: filters.serviceType });
+      query.andWhere('LOWER(services.service_name) LIKE LOWER(:serviceType)', 
+        { serviceType: `%${filters.serviceType}%` });
+    }
+
+    if (filters.serviceCategory) {
+      query.andWhere('services.service_category = :serviceCategory', 
+        { serviceCategory: filters.serviceCategory });
     }
 
     return query.getMany();

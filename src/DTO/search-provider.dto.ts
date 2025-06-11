@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum } from 'class-validator';
+import { ServiceCategory } from '../enums/service-categories.enum';
 
 export class SearchProviderDto {
     @ApiProperty({ required: false })
@@ -26,4 +27,9 @@ export class SearchProviderDto {
     @IsOptional()
     @IsString()
     serviceType?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsEnum(ServiceCategory)
+    serviceCategory?: ServiceCategory;
 } 

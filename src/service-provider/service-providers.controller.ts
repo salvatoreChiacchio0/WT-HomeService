@@ -4,6 +4,7 @@ import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders
 import { CreateServiceProviderDto } from 'src/DTO/create-service-provider.dto';
 import { ApiBearerAuth, ApiQuery, ApiOperation } from '@nestjs/swagger';
 import { SearchProviderDto } from 'src/DTO/search-provider.dto';
+import { ServiceCategory } from 'src/enums/service-categories.enum';
 
 @Controller('service-providers')
 @ApiBearerAuth()
@@ -24,12 +25,14 @@ export class ServiceProvidersController {
   @ApiQuery({ name: 'minRating', required: false, description: 'Minimum rating (1-5)' })
   @ApiQuery({ name: 'location', required: false, description: 'Location/area of service' })
   @ApiQuery({ name: 'serviceType', required: false, description: 'Type of service offered' })
+  @ApiQuery({ name: 'serviceCategory', required: false, description: 'Category of service', enum: ServiceCategory })
   async searchProviders(
     @Query('query') query?: string,
     @Query('experience') experience?: string,
     @Query('minRating') minRating?: string,
     @Query('location') location?: string,
     @Query('serviceType') serviceType?: string,
+    @Query('serviceCategory') serviceCategory?: ServiceCategory,
   ): Promise<ServiceProviders[]> {
     const filters: SearchProviderDto = {
       query: query || undefined,
@@ -37,6 +40,7 @@ export class ServiceProvidersController {
       minRating: minRating ? this.parseNumber(minRating) : undefined,
       location: location || undefined,
       serviceType: serviceType || undefined,
+      serviceCategory: serviceCategory || undefined,
     };
     
     this.logger.log('Search parameters:', filters);
@@ -60,6 +64,10 @@ export class ServiceProvidersController {
 
   @Post()
   async create(@Body() createDto: CreateServiceProviderDto): Promise<ServiceProviders> {
+    // Parse serviceCategories from JSON string if it's a string
+    if (typeof createDto.serviceCategories === 'string') {
+      createDto.serviceCategories = JSON.parse(createDto.serviceCategories);
+    }
     return this.serviceProviderService.create(createDto);
   }
 

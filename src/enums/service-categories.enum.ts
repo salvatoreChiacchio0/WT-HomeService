@@ -1,0 +1,20 @@
+export enum ServiceCategory {
+  ROOFING = 'Roofing',
+  MASONRY = 'Masonry',
+  FLOORING = 'Flooring',
+  WINDOW_DOOR_REPAIR = 'Window & Door Repair',
+  APPLIANCE_REPAIR = 'Appliance Repair',
+  PEST_CONTROL = 'Pest Control',
+  DRIVEWAY_SIDEWALK_REPAIR = 'Driveway & Sidewalk Repair',
+  FENCE_INSTALLATION_REPAIR = 'Fence Installation & Repair',
+  SOLAR_PANEL_INSTALLATION = 'Solar Panel Installation',
+  WATER_HEATER_REPAIR = 'Water Heater Repair',
+  SEPTIC_SYSTEM_MAINTENANCE = 'Septic System Maintenance',
+  INSULATION_SERVICES = 'Insulation Services',
+  WELDING = 'Welding',
+  CONCRETE_WORK = 'Concrete Work',
+  LANDSCAPING = 'Landscaping',
+  POOL_SPA_MAINTENANCE = 'Pool & Spa Maintenance',
+  MOVING_SERVICES = 'Moving Services',
+  GENERAL = 'General'
+} 

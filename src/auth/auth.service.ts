@@ -70,6 +70,8 @@ export class AuthService {
           experience_years: parseInt(userData.experience_years) || 0,
           availability: userData.availability,
           pricing_model: userData.pricing_model,
+          service_categories: userData.serviceCategories ? JSON.parse(userData.serviceCategories) : [],
+          hourly_rate: userData.hourly_rate ? parseFloat(userData.hourly_rate) : null
         };
 
         // Create the provider record
