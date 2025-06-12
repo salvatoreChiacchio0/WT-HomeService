@@ -4,6 +4,9 @@ export class CreateReviewDto {
   @IsNumber()
   user_id: number;
 
+   @IsNumber()
+  customer_id: number;
+
   @IsNumber()
   provider_id: number;
 

@@ -25,6 +25,9 @@ export class Review {
   provider_id: number;
 
   @Column()
+  user_id: number;
+
+  @Column()
   booking_id: number;
 
   @ManyToOne(() => ServiceProviders, (serviceProvider) => serviceProvider.reviews, { onDelete: 'CASCADE' })
@@ -38,4 +41,8 @@ export class Review {
   @ManyToOne(() => User, (user) => user.review, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'customer_id' })
   customer: User;
+
+    @ManyToOne(() => User, (user) => user.review, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  providerUser: User;
 }
