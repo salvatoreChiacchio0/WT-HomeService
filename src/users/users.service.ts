@@ -45,4 +45,12 @@ export class UsersService {
   async delete(id: number): Promise<void> {
     await this.usersRepository.delete(id);
   }
+
+  async findByUsernameLike(partial: string): Promise<User[]> {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :partial', { partial: `%${partial}%` })
+      .select(['user.user_id', 'user.username', 'user.email', 'user.role', 'user.profile_image'])
+      .getMany();
+  }
 }

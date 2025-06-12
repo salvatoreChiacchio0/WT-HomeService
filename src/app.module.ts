@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
+import { ChatModule } from './chat/chat.module';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ dotenv.config();
     BookingModule,
     ReviewsModule,
     AuthModule,
+    ChatModule
   ],
 })
 export class AppModule {}

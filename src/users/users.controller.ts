@@ -45,4 +45,10 @@ export class UsersController {
     console.log(`Deleting user with id: ${id}`);
     return this.usersService.delete(+id);
   }
+
+  @Get('search/:partialUsername')
+  findByUsernameLike(@Param('partialUsername') partial: string) {
+    console.log(`Searching users with username containing: ${partial}`);
+    return this.usersService.findByUsernameLike(partial);
+  }
 }

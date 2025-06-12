@@ -15,9 +15,19 @@ import { ChatService } from './chat.service';
 import { Message } from 'src/entities/chat/chat.entity';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
+import { UsersService } from 'src/users/users.service';
 
 @ApiBearerAuth()
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  },
+  namespace: '/',
+  transports: ['websocket'],
+})
 @ApiTags('Chat')
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
@@ -30,6 +40,7 @@ export class ChatGateway
     @Inject('REDIS_CLIENT') private readonly redisClient,
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   @WebSocketServer() io: Server;
@@ -42,20 +53,24 @@ export class ChatGateway
     try {
       const token = this.extractTokenFromHandshake(client);
       if (!token) {
-        throw new Error('No token provided');
+        client.disconnect(true);
+        this.logger.warn('Client disconnected: No token provided.');
+        return;
       }
   
-      const payload = await this.jwtService.verifyAsync(token);
+      const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+      
+      const payload = await this.jwtService.verifyAsync(cleanToken);
       const userId = payload.sub.toString();
   
       await this.redisClient.set(`user:${userId}`, client.id, {
-        EX: 1800, //30 min exp
+        EX: 1800,
       });
   
-      const { sockets } = this.io.sockets;
-      this.logger.debug(`Number of connected clients: ${sockets.size}`);
-    } catch (error) {
-      this.logger.error(`Authentication failed: ${error.message}`);
+      this.logger.log(`Client connected: ${client.id} for user ${userId}`);
+
+    } catch (error: any) {
+      this.logger.error(`Connection handling error: ${error.message}`);
       client.disconnect(true);
     }
   }
@@ -65,7 +80,7 @@ export class ChatGateway
       for (const key of await this.redisClient.keys('user:*')) {
         const socketId = await this.redisClient.get(key);
         if (socketId === client.id) {
-          await this.redisClient.del(key); 
+          await this.redisClient.del(key);
           this.logger.log(`Removed user id: ${key.split(':')[1]} from Redis`);
           break;
         }
@@ -79,33 +94,48 @@ export class ChatGateway
   @ApiOperation({ summary: 'Send a chat message' })
   @ApiBody({ type: () => Object })
   async handleMessage(@MessageBody() data: Partial<Message>, client: Socket) {
-
     data.sent_at = new Date();
     const message = await this.chatService.create(data);
-
-
     this.sendMSGtoReceiver(message);
   }
 
   private async sendMSGtoReceiver(message: Message) {
+    const sender = await this.usersService.findOneById(message.sender.user_id);
+    const receiver = await this.usersService.findOneById(message.receiver.user_id);
+    
     const receivedMsg = {
       id: message.message_id,
-      message: message.message_text,
+      message_text: message.message_text,
       sent_at: message.sent_at,
-      senderId: message.sender,
-      receiverId: message.receiver,
+      sender: {
+        user_id: sender.user_id,
+        username: sender.username,
+        first_name: sender.first_name,
+        last_name: sender.last_name,
+      },
+      receiver: {
+        user_id: receiver.user_id,
+        username: receiver.username,
+        first_name: receiver.first_name,
+        last_name: receiver.last_name,
+      },
     };
-  
-    this.logger.log(`Sending message to receiver: ${message.receiver}`);
-  
-    const recipientSocketId = await this.redisClient.get(`user:${receivedMsg.receiverId}`);
+    
+    this.logger.log(`Sending message from ${sender.username} to receiver: ${receiver.username}`);
+    
+    // Invia il messaggio SOLO al destinatario
+    const recipientSocketId = await this.redisClient.get(`user:${receiver.user_id}`);
     if (recipientSocketId) {
-      this.io.to(recipientSocketId).emit('receive', receivedMsg); 
+      this.io.to(recipientSocketId).emit('receive', receivedMsg);
+      this.logger.log(`Message sent to receiver ${receiver.username} via socket ${recipientSocketId}`);
     } else {
-      this.logger.warn(`Recipient with id ${receivedMsg.receiverId} is not online`);
+      this.logger.warn(`Recipient ${receiver.username} with id ${receiver.user_id} is not online`);
     }
+    
+    // RIMOSSO: Non inviare più il messaggio al mittente per evitare duplicati
   }
 
+  
   @SubscribeMessage('receive')
   @ApiOperation({ summary: 'Receive a chat message' })
   handleReceive(@MessageBody() data: any) {
@@ -113,16 +143,26 @@ export class ChatGateway
   }
 
   private extractTokenFromHandshake(client: Socket): string | null {
-    const authHeader = client.handshake.headers.authorization;
-    if (!authHeader) {
+    try {
+      if (client.handshake.auth && client.handshake.auth.token) {
+        const auth_token = client.handshake.auth.token as string;
+        return auth_token.startsWith('Bearer ') ? auth_token.slice(7) : auth_token;
+      }
+
+      const authHeader = client.handshake.headers.authorization;
+      if (!authHeader) {
+        return null;
+      }
+
+      const [type, token] = authHeader.split(' ');
+      if (type !== 'Bearer') {
+        return null;
+      }
+
+      return token;
+    } catch (error) {
+      this.logger.error(`Error extracting token: ${error.message}`);
       return null;
     }
-
-    const [type, token] = authHeader.split(' ');
-    if (type !== 'Bearer') {
-      return null;
-    }
-
-    return token;
   }
 }
