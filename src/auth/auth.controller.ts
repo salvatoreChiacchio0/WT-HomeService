@@ -19,9 +19,10 @@ import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 import { Public } from './decorators/public.decorators';
-import { ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { LoginDto } from 'src/DTO/login-dto';
 import { User } from 'src/entities/users/users.entity';
+import { CreateUserDto } from 'src/DTO/create-user.dto';
   
   @Controller('auth')
   export class AuthController {
@@ -37,27 +38,10 @@ import { User } from 'src/entities/users/users.entity';
 
     @Public()
     @ApiOperation({ summary: 'Register into HomeService'})
-    @ApiConsumes('multipart/form-data')
     @HttpCode(HttpStatus.CREATED)
     @Post('sign-up')
-    @UseInterceptors(FileInterceptor('profile_photo'))
-    async signUp(
-      @Body() userData: any,
-      @UploadedFile(
-        new ParseFilePipe({
-          validators: [
-            new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-            new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
-          ],
-          fileIsRequired: false,
-        }),
-      )
-      file?: Express.Multer.File,
-    ) {
-      if (file) {
-        userData.profile_photo = file.buffer;
-      }
-      console.log("signup",userData)
+    @ApiBody({ type: CreateUserDto })
+    async signUp(@Body() userData: CreateUserDto) {
       return this.authService.signUp(userData);
     }
 

@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { ServiceProviders } from '../service-provider/ServiceProviders.entity';
 import { Booking } from '../bookings/bookings.entity';
+import { Review } from '../review/review.entity';
 
 @Entity('services')
 export class Service {
@@ -13,16 +14,20 @@ export class Service {
   service_name: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column('text')
   description: string;
+
+  @ApiProperty()
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  price: number | null;
 
   @ApiProperty()
   @Column()
   location: string;
 
   @ApiProperty()
-  @Column({ nullable: true, type: 'int' })
-  price: number | null;
+  @Column({ nullable: true })
+  service_category: string;
 
   @ApiProperty()
   @Column({ type: 'json', nullable: true })
@@ -42,34 +47,22 @@ export class Service {
   };
 
   @ApiProperty()
-  @Column({ type: 'simple-array', nullable: true })
-  images: string[];
+  @Column('text', { nullable: true })
+  images: string;
 
-  @ApiProperty()
-  @Column({ type: 'simple-array', nullable: true })
-  certificates: string[];
-
-  @ApiProperty()
-  @Column({ type: 'json', nullable: true })
-  requirements: {
-    equipment_needed: string[];
-    qualifications: string[];
-    special_instructions: string;
-  };
-
-  @ApiProperty()
-  @Column({ nullable: true })
-  service_category: string;
 
   @ApiProperty()
   @Column({ name: 'provider_id', type: 'int', nullable: false })
   provider_id: number;
 
-  @ManyToOne(() => ServiceProviders, (provider) => provider.services)
+  @ManyToOne(() => ServiceProviders, provider => provider.services)
   @JoinColumn({ name: 'provider_id' })
   provider: ServiceProviders;
 
-  @OneToMany(() => Booking, (booking) => booking.service)
+  @OneToMany(() => Booking, booking => booking.service)
   bookings: Booking[];
+
+  @OneToMany(() => Review, review => review.service)
+  reviews: Review[];
 
 }

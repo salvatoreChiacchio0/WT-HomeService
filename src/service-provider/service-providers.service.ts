@@ -1,33 +1,33 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders.entity';
-import { Service } from 'src/entities/services/services.entity';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
+import { Service } from '../entities/services/services.entity';
+import { User } from '../entities/users/users.entity';
 import { CreateServiceProviderDto } from 'src/DTO/create-service-provider.dto';
 import { SearchProviderDto } from 'src/DTO/search-provider.dto';
 
 @Injectable()
-export class ServiceProviderService {
-  private readonly logger = new Logger(ServiceProviderService.name);
-
+export class ServiceProvidersService {
   constructor(
     @InjectRepository(ServiceProviders)
-    private readonly serviceProviderRepository: Repository<ServiceProviders>,
+    private serviceProviderRepository: Repository<ServiceProviders>,
     @InjectRepository(Service)
-    private readonly serviceRepository: Repository<Service>,
+    private serviceRepository: Repository<Service>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
-  async findByUserId(userId: number): Promise<ServiceProviders | null> {
-    return this.serviceProviderRepository.findOne({
-      where: { user_id: userId },
-      relations: ['services'], // Include services in the response
+  async findAll(): Promise<ServiceProviders[]> {
+    return this.serviceProviderRepository.find({
+      relations: ['user', 'services'],
     });
   }
 
   async findOne(id: number): Promise<ServiceProviders> {
     const provider = await this.serviceProviderRepository.findOne({
       where: { provider_id: id },
-      relations: ['services'], // Include services in the response
+      relations: ['user', 'services'],
     });
     if (!provider) {
       throw new NotFoundException(`Service provider with ID ${id} not found`);
@@ -35,71 +35,79 @@ export class ServiceProviderService {
     return provider;
   }
 
-  async findAll(): Promise<ServiceProviders[]> {
-    return this.serviceProviderRepository.find({
-      relations: ['services'], // Include services in the response
-    });
-  }
-  
-  async findAllByName(name:string): Promise<ServiceProviders[]> {
-    return this.serviceProviderRepository.find({ 
-      where: { name:name },
-      relations: ['services'], // Include services in the response
+  async findByUserId(userId: number): Promise<ServiceProviders | null> {
+    return this.serviceProviderRepository.findOne({
+      where: { user: { user_id: userId } },
+      relations: ['user', 'services'],
     });
   }
 
-  async create(data: CreateServiceProviderDto | Partial<ServiceProviders>): Promise<ServiceProviders> {
-    const providerData = { ...data };
-    let serviceCategories: string[] = [];
+  async create(createServiceProviderDto: any): Promise<ServiceProviders> {
+    const user = await this.userRepository.findOne({
+      where: { user_id: createServiceProviderDto.user_id }
+    });
 
-    if ('serviceCategories' in data) {
-      serviceCategories = data.serviceCategories || [];
-    } else if ('service_categories' in data) {
-      serviceCategories = data.service_categories || [];
+    if (!user) {
+      throw new NotFoundException(`User with ID ${createServiceProviderDto.user_id} not found`);
     }
 
     const provider = this.serviceProviderRepository.create({
-      ...providerData,
-      service_categories: serviceCategories
+      user,
+      services: [],
     });
-    const savedProvider = await this.serviceProviderRepository.save(provider);
-    
-    if (serviceCategories.length > 0) {
-      await this.addServices(savedProvider.provider_id, serviceCategories);
-    }
-    
-    return this.findOne(savedProvider.provider_id);
-  }
 
-  async update(id: number, data: Partial<ServiceProviders>): Promise<ServiceProviders> {
-    const provider = await this.findOne(id); 
-    Object.assign(provider, data);
     return this.serviceProviderRepository.save(provider);
   }
 
-  async delete(id: number): Promise<void> {
+  async update(id: number, updateServiceProviderDto: any): Promise<ServiceProviders> {
+    const provider = await this.findOne(id);
+    Object.assign(provider, updateServiceProviderDto);
+    return this.serviceProviderRepository.save(provider);
+  }
+
+  async remove(id: number): Promise<void> {
     const result = await this.serviceProviderRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Service provider with ID ${id} not found`);
     }
   }
 
-  async addServices(providerId: number, serviceNames: string[]): Promise<void> {
+  async addService(providerId: number, serviceData: any): Promise<Service> {
     const provider = await this.findOne(providerId);
     
-    // Create service records for each service name
-    for (const serviceName of serviceNames) {
-      const service = this.serviceRepository.create({
-        service_name: serviceName,
-        description: `${serviceName} service provided by ${provider.name}`,
-        location: 'Service area to be specified', // Default location
-        price: null, // Price will be set later
-        images: [],
-        service_category: 'General', // Default category
-        provider_id: providerId
-      });
-      await this.serviceRepository.save(service);
+    const service = new Service();
+    service.service_name = serviceData.service_name;
+    service.description = serviceData.description;
+    service.price = serviceData.price;
+    service.service_category = serviceData.service_category;
+    service.location = serviceData.location;
+    service.pricing_model = serviceData.pricing_model;
+    service.availability = serviceData.availability;
+    service.images = serviceData.image || '';
+    service.provider = provider;
+
+    return this.serviceRepository.save(service);
+  }
+
+  async removeService(providerId: number, serviceId: number): Promise<void> {
+    const provider = await this.findOne(providerId);
+    const service = await this.serviceRepository.findOne({
+      where: { service_id: serviceId, provider: { provider_id: providerId } },
+    });
+
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found for provider ${providerId}`);
     }
+
+    await this.serviceRepository.remove(service);
+  }
+
+  async findAllServices(providerId: number): Promise<Service[]> {
+    const provider = await this.findOne(providerId);
+    return this.serviceRepository.find({
+      where: { provider: { provider_id: providerId } },
+      relations: ['provider', 'provider.user'],
+    });
   }
 
   async search(filters: SearchProviderDto): Promise<ServiceProviders[]> {

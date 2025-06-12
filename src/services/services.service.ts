@@ -1,88 +1,26 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Service } from 'src/entities/services/services.entity';
-import { CreateServiceDto } from 'src/DTO/create-service.dto';
-import { UpdateServiceDto } from 'src/DTO/update-service.dto';
-import { SearchServiceDto } from 'src/DTO/search-service.dto';
+import { Service } from '../entities/services/services.entity';
+import { SearchServiceDto } from '../DTO/search-service.dto';
 
 @Injectable()
 export class ServicesService {
-  private readonly logger = new Logger(ServicesService.name);
-  
-
   constructor(
     @InjectRepository(Service)
-    private readonly serviceRepository: Repository<Service>,
+    private servicesRepository: Repository<Service>,
   ) {}
 
   async findAll(): Promise<Service[]> {
-    return this.serviceRepository.find({
-      relations: ['provider']
+    return this.servicesRepository.find({
+      relations: ['provider', 'provider.user'],
     });
   }
 
-  async findAllServiceBySpId(id: number) : Promise<Service[]>{
-    return this.serviceRepository.find({ 
-      where: { provider_id: id },
-      relations: ['provider']
-    });
-  }
-
-async search(filters: SearchServiceDto): Promise<Service[]> {
-    this.logger.log('Search filters:', filters);
-    const query = this.serviceRepository.createQueryBuilder('service')
-      .leftJoinAndSelect('service.provider', 'provider')
-      .leftJoinAndSelect('provider.reviews', 'reviews')
-      .leftJoinAndSelect('reviews.customer', 'customer');
-
-    // Filtro per query di testo
-    if (filters.query && filters.query.trim()) {
-      query.andWhere('(LOWER(service.service_name) LIKE LOWER(:query) OR LOWER(service.description) LIKE LOWER(:query))', 
-        { query: `%${filters.query.trim()}%` });
-    }
-
-    // Filtro per categoria
-    if (filters.serviceCategory && filters.serviceCategory.trim()) {
-      query.andWhere('service.service_category = :serviceCategory', {
-        serviceCategory: filters.serviceCategory.trim(),
-      });
-    }
-
-    // Filtro prezzo minimo
-    if (filters.minPrice !== undefined && filters.minPrice !== null && !isNaN(filters.minPrice)) {
-      query.andWhere('service.price >= :minPrice', { minPrice: filters.minPrice });
-    }
-
-    // Filtro prezzo massimo
-    if (filters.maxPrice !== undefined && filters.maxPrice !== null && !isNaN(filters.maxPrice)) {
-      query.andWhere('service.price <= :maxPrice', { maxPrice: filters.maxPrice });
-    }
-
-    // Filtro per location
-    if (filters.location && filters.location.trim()) {
-      query.andWhere('LOWER(service.location) LIKE LOWER(:location)', 
-        { location: `%${filters.location.trim()}%` });
-    }
-
-    // Filtro rating minimo
-    if (filters.minRating !== undefined && filters.minRating !== null && !isNaN(filters.minRating)) {
-      query.andWhere('provider.rating >= :minRating', { minRating: filters.minRating });
-    }
-
-    // Filtro disponibilità
-    if (filters.availability !== undefined && filters.availability !== null) {
-      query.andWhere('service.availability->>\'emergency_available\' = :availability', 
-        { availability: filters.availability.toString() });
-    }
-
-    return query.getMany();
-  }
-  
   async findOne(id: number): Promise<Service> {
-    const service = await this.serviceRepository.findOne({ 
+    const service = await this.servicesRepository.findOne({
       where: { service_id: id },
-      relations: ['provider', 'provider.reviews', 'provider.reviews.customer']
+      relations: ['provider', 'provider.user'],
     });
     if (!service) {
       throw new NotFoundException(`Service with ID ${id} not found`);
@@ -90,34 +28,71 @@ async search(filters: SearchServiceDto): Promise<Service[]> {
     return service;
   }
 
-  async create(createServiceDto: Service): Promise<Service> {
-    const service = this.serviceRepository.create(createServiceDto);
-    return this.serviceRepository.save(service);
+  async create(createServiceDto: Partial<Service>): Promise<Service> {
+    console.log("HERE")
+    const service = this.servicesRepository.create({...createServiceDto});
+        console.log("HERE 2",service)
+
+    const savedService = await this.servicesRepository.save(service);
+            console.log("HERE 3",savedService)
+
+    return this.findOne(savedService.service_id);
   }
 
-  async update(id: number, updateServiceDto: UpdateServiceDto): Promise<Service> {
+  async update(id: number, updateServiceDto: any): Promise<Service> {
     const service = await this.findOne(id);
-    Object.assign(service, updateServiceDto);
-    return this.serviceRepository.save(service);
+    const updatedService = {
+      ...service,
+      ...updateServiceDto,
+      price: updateServiceDto.price ? parseFloat(updateServiceDto.price) : service.price,
+    };
+    await this.servicesRepository.save(updatedService);
+    return this.findOne(id);
   }
 
   async delete(id: number): Promise<void> {
-    const result = await this.serviceRepository.delete(id);
+    const result = await this.servicesRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Service with ID ${id} not found`);
     }
   }
 
-  // Metodo di test per verificare il caricamento delle reviews
-  async testReviewsLoading(providerId: number): Promise<any> {
-    const service = await this.serviceRepository
+  async findAllServiceBySpId(providerId: number): Promise<Service[]> {
+    return this.servicesRepository.find({
+      where: { provider: { provider_id: providerId } },
+      relations: ['provider', 'provider.user'],
+    });
+  }
+
+  async search(filters: SearchServiceDto): Promise<Service[]> {
+    const query = this.servicesRepository
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.provider', 'provider')
-      .leftJoinAndSelect('provider.reviews', 'reviews')
-      .leftJoinAndSelect('reviews.customer', 'customer')
-      .where('provider.provider_id = :providerId', { providerId })
-      .getOne();
+      .leftJoinAndSelect('provider.user', 'user');
 
-    return service;
+    if (filters.query) {
+      query.andWhere(
+        '(service.service_name ILIKE :query OR service.description ILIKE :query OR service.location ILIKE :query OR service.service_category ILIKE :query)',
+        { query: `%${filters.query}%` }
+      );
+    }
+
+    if (filters.serviceCategory) {
+      query.andWhere('service.service_category = :category', { category: filters.serviceCategory });
+    }
+
+    if (filters.minPrice) {
+      query.andWhere('service.price >= :minPrice', { minPrice: filters.minPrice });
+    }
+
+    if (filters.maxPrice) {
+      query.andWhere('service.price <= :maxPrice', { maxPrice: filters.maxPrice });
+    }
+
+    if (filters.location) {
+      query.andWhere('service.location ILIKE :location', { location: `%${filters.location}%` });
+    }
+
+    return query.getMany();
   }
 }

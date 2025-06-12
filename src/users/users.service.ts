@@ -37,9 +37,9 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async update(id: number, user: User): Promise<User> {
-    await this.usersRepository.update(id, user);
-    return this.findOne(user.email);
+  async update(id: number, user: Partial<User>): Promise<User> {
+     await this.usersRepository.update(id, user);
+    return this.findOneById(id);
   }
 
   async delete(id: number): Promise<void> {

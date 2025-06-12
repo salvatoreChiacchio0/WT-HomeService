@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders.entity';
-import { ServiceProviderService } from './service-providers.service';
+import { ServiceProvidersService } from './service-providers.service';
 import { ServiceProvidersController } from './service-providers.controller';
 import { Service } from 'src/entities/services/services.entity';
 import { ProviderImage } from 'src/entities/service-provider/ProviderImage.entity';
@@ -12,6 +11,8 @@ import { FileUploadService } from '../services/file-upload.service';
 import { FileUploadController } from './file-upload.controller';
 import { AvailabilityService } from '../services/availability.service';
 import { AvailabilityController } from './availability.controller';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
+import { User } from '../entities/users/users.entity';
 
 @Module({
   imports: [
@@ -21,11 +22,13 @@ import { AvailabilityController } from './availability.controller';
       Service,
       ProviderImage,
       ProviderCertificate,
-      ProviderAvailability
+      ProviderAvailability,
+      ServiceProviders,
+      User
     ]),
   ],
   controllers: [ServiceProvidersController, FileUploadController, AvailabilityController],
-  providers: [ServiceProviderService, FileUploadService, AvailabilityService],
-  exports: [ServiceProviderService, FileUploadService, AvailabilityService],
+  providers: [ServiceProvidersService, FileUploadService, AvailabilityService],
+  exports: [ServiceProvidersService, FileUploadService, AvailabilityService],
 })
 export class ServiceProvidersModule {} 

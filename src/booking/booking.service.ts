@@ -33,17 +33,14 @@ export class BookingService {
   }
   
 
-  async create(createBookingDto: CreateBookingDto): Promise<Booking> {
+  async create(createBookingDto: Partial<Booking>): Promise<Booking> {
+    console.log(createBookingDto)
     if (!createBookingDto.booking_date) {
       throw new BadRequestException('Booking date is required');
     }
 
-    const booking = this.bookingRepository.create({
-      ...createBookingDto,
-      booking_date: createBookingDto.booking_date instanceof Date 
-        ? createBookingDto.booking_date 
-        : new Date(createBookingDto.booking_date)
-    });
+
+    const booking = this.bookingRepository.create({...createBookingDto});
     return this.bookingRepository.save(booking);
   }
 

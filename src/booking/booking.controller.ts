@@ -30,6 +30,7 @@ export class BookingController {
 
   @Post()
   async create(@Body() createDto: CreateBookingDto): Promise<Booking> {
+    
     return this.bookingsService.create(createDto);
   }
 

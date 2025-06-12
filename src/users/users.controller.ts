@@ -35,7 +35,7 @@ export class UsersController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() user: User) {
+  update(@Param('id') id: string, @Body() user: Partial<User>) {
     console.log(`Updating user with id: ${id}`, user);
     return this.usersService.update(+id, user);
   }

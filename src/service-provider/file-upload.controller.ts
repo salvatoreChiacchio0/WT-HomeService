@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, Body, Param, Get, Res, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, Body, Param, Get, Res, Delete, BadRequestException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { FileUploadService } from '../services/file-upload.service';
@@ -6,13 +6,15 @@ import { ProviderImage } from '../entities/service-provider/ProviderImage.entity
 import { ProviderCertificate } from '../entities/service-provider/ProviderCertificate.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ServiceProviderService } from './service-providers.service';
+import { ServiceProvidersService } from './service-providers.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('provider-files')
+@UseGuards(AuthGuard)
 export class FileUploadController {
     constructor(
         private readonly fileUploadService: FileUploadService,
-        private readonly serviceProviderService: ServiceProviderService,
+        private readonly serviceProviderService: ServiceProvidersService,
         @InjectRepository(ProviderImage)
         private imageRepository: Repository<ProviderImage>,
         @InjectRepository(ProviderCertificate)

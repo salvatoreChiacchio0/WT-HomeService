@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDTOResponse } from 'src/DTO/login-dto';
 import { User, Role } from 'src/entities/users/users.entity';
 import { SignupDTOResponse } from 'src/DTO/signup-dto';
-import { ServiceProviderService } from '../service-provider/service-providers.service';
+import { ServiceProvidersService } from '../service-provider/service-providers.service';
 import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders.entity';
 
 @Injectable()
@@ -12,37 +12,55 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private serviceProviderService: ServiceProviderService
+    private serviceProviderService: ServiceProvidersService
   ) {}
 
   async signIn(
-    email: string,
-    pass: string,
+    username: string,
+    password: string,
   ): Promise<LoginDTOResponse> {
-    const user = await this.usersService.findOne(email);
-    if (user?.password !== pass) {
-      throw new UnauthorizedException();
+    const user = await this.usersService.findOne(username);
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    const payload = { sub: user.user_id, email: user.email, role: user.role }; 
-    const { password, created_at, ...result } = user;
+    if (user.password !== password) {
+      throw new Error('Invalid password');
+    }
 
-    // If user is a provider, get their provider information
     let providerInfo: Partial<ServiceProviders> | undefined = undefined;
     if (user.role == Role.Provider) {
       const provider = await this.serviceProviderService.findByUserId(user.user_id);
-      console.log(provider,user.user_id)
       if (provider) {
-        providerInfo = provider;
+        providerInfo = {
+          provider_id: provider.provider_id,
+          user_id: user.user_id,
+        };
+      } else {
+        const providerData = {
+          user_id: user.user_id,
+        };
+        const provider = await this.serviceProviderService.create(providerData);
+        providerInfo = {
+          provider_id: provider.provider_id,
+          user_id: user.user_id,
+        };
       }
     }
-    console.log(providerInfo)
+
+    const payload = { username: user.username, sub: user.user_id };
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.sign(payload),
       user: {
-        ...result,
+        user_id: user.user_id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone_number: user.phone_number,
         provider_info: providerInfo
-      }
+      },
     };
   }
 

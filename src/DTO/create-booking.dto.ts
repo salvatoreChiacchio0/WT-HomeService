@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsDateString } from 'class-validator';
+import { IsNumber, IsString, IsDateString, IsDate } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateBookingDto {
@@ -11,9 +11,13 @@ export class CreateBookingDto {
   @IsNumber()
   service_id: number;
 
-  @IsDateString()
-  @Transform(({ value }) => new Date(value))
+  @IsNumber()
+  price: number;
+
+  @IsString()
   booking_date: Date;
+   @IsString()
+  booking_time: string;
 
   @IsString()
   status: string;

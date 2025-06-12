@@ -59,7 +59,7 @@ export class ServiceProviders {
     reviews: Review[];
 
     @OneToMany(() => ProviderImage, (image: ProviderImage) => image.provider_id)
-    images: ProviderImage[];
+    images: ProviderImage;
 
     @OneToMany(() => ProviderCertificate, (certificate: ProviderCertificate) => certificate.provider_id)
     certificates: ProviderCertificate[];

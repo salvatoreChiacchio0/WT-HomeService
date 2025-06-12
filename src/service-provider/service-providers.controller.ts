@@ -1,17 +1,21 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, NotFoundException, Query, ValidationPipe, Logger } from '@nestjs/common';
-import { ServiceProviderService } from './service-providers.service';
-import { ServiceProviders } from 'src/entities/service-provider/ServiceProviders.entity';
-import { CreateServiceProviderDto } from 'src/DTO/create-service-provider.dto';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UseGuards, Query, NotFoundException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { ServiceProvidersService } from './service-providers.service';
+import { CreateServiceProviderDto } from '../DTO/create-service-provider.dto';
+import { UpdateServiceProviderDto } from '../DTO/update-service-provider.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { ServiceProviders } from '../entities/service-provider/ServiceProviders.entity';
 import { ApiBearerAuth, ApiQuery, ApiOperation } from '@nestjs/swagger';
 import { SearchProviderDto } from 'src/DTO/search-provider.dto';
 import { ServiceCategory } from 'src/enums/service-categories.enum';
 
 @Controller('service-providers')
 @ApiBearerAuth()
+@UseGuards(AuthGuard)
 export class ServiceProvidersController {
-  private readonly logger = new Logger(ServiceProvidersController.name);
-
-  constructor(private readonly serviceProviderService: ServiceProviderService) {}
+  constructor(private readonly serviceProviderService: ServiceProvidersService) {}
 
   @Get()
   async findAll(): Promise<ServiceProviders[]> {
@@ -43,46 +47,50 @@ export class ServiceProvidersController {
       serviceCategory: serviceCategory || undefined,
     };
     
-    this.logger.log('Search parameters:', filters);
     return this.serviceProviderService.search(filters);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<ServiceProviders> {
     const serviceProvider = await this.serviceProviderService.findOne(+id);
-    if (!serviceProvider) {
-      throw new NotFoundException(`Service provider with ID ${id} not found`);
-    }
     return serviceProvider;
   }
 
-  @Get('/findByName/:name')
-  async findByName(@Param('name') name: string): Promise<ServiceProviders[]> {
-    const serviceProviders = await this.serviceProviderService.findAllByName(name);
-    return serviceProviders;
+  @Get('name/:name')
+  async findAllByName(@Param('name') name: string): Promise<ServiceProviders[]> {
+    const serviceProviders = await this.serviceProviderService.findAll();
+    return serviceProviders.filter(provider => 
+      provider.user.first_name.toLowerCase().includes(name.toLowerCase()) ||
+      provider.user.last_name.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get service provider by user ID' })
+  async findByUserId(@Param('userId') userId: string): Promise<ServiceProviders> {
+    const provider = await this.serviceProviderService.findByUserId(+userId);
+    if (!provider) {
+      throw new NotFoundException(`Service provider not found for user ID ${userId}`);
+    }
+    return provider;
   }
 
   @Post()
   async create(@Body() createDto: CreateServiceProviderDto): Promise<ServiceProviders> {
-    // Parse serviceCategories from JSON string if it's a string
-    if (typeof createDto.serviceCategories === 'string') {
-      createDto.serviceCategories = JSON.parse(createDto.serviceCategories);
-    }
     return this.serviceProviderService.create(createDto);
   }
 
-  @Put(':id')
+  @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateDto: Partial<ServiceProviders>,
+    @Body() updateDto: UpdateServiceProviderDto,
   ): Promise<ServiceProviders> {
     return this.serviceProviderService.update(+id, updateDto);
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<{ message: string }> {
-    await this.serviceProviderService.delete(+id);
-    return { message: `Service provider with ID ${id} deleted successfully` };
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.serviceProviderService.remove(+id);
   }
 
   // Metodi di utilità per la conversione sicura dei tipi

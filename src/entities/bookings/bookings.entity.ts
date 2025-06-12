@@ -21,17 +21,6 @@ export class Booking {
   @Column()
   status: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  price: number;
-
-  @Column({ nullable: true })
-  client_name: string;
-
-  @Column({ nullable: true })
-  client_email: string;
-
-  @Column({ nullable: true })
-  client_phone: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;
@@ -49,6 +38,9 @@ export class Booking {
 
   @Column()
   service_id: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  price: number;
 
   @ApiProperty()
   @ManyToOne(() => Service, (service) => service.bookings, { onDelete: 'CASCADE' })

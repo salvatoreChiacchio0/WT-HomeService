@@ -9,8 +9,7 @@ import { ServiceProvidersModule } from '../service-provider/service-provider.mod
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Service, ServiceProviders]),
-    ServiceProvidersModule
+    TypeOrmModule.forFeature([Service, ServiceProviders])
   ],
   controllers: [ServicesController],
   providers: [ServicesService, AdvancedSearchService],

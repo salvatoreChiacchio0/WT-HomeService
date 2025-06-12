@@ -3,17 +3,14 @@ import { IsString, IsOptional, IsNumber } from 'class-validator';
 export class UpdateServiceDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  service_name?: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
-
-  @IsOptional()
   @IsNumber()
-  price?: number;
+  price?: number
+  
 }
