@@ -30,6 +30,7 @@ export class ServiceProvidersController {
   @ApiQuery({ name: 'location', required: false, description: 'Location/area of service' })
   @ApiQuery({ name: 'serviceType', required: false, description: 'Type of service offered' })
   @ApiQuery({ name: 'serviceCategory', required: false, description: 'Category of service', enum: ServiceCategory })
+  @ApiQuery({ name: 'priceType', required: false, description: 'Price type (fixed or hourly)' })
   async searchProviders(
     @Query('query') query?: string,
     @Query('experience') experience?: string,
@@ -37,6 +38,7 @@ export class ServiceProvidersController {
     @Query('location') location?: string,
     @Query('serviceType') serviceType?: string,
     @Query('serviceCategory') serviceCategory?: ServiceCategory,
+    @Query('priceType') priceType?: string,
   ): Promise<ServiceProviders[]> {
     const filters: SearchProviderDto = {
       query: query || undefined,
@@ -45,6 +47,7 @@ export class ServiceProvidersController {
       location: location || undefined,
       serviceType: serviceType || undefined,
       serviceCategory: serviceCategory || undefined,
+      priceType: priceType || undefined,
     };
     
     return this.serviceProviderService.search(filters);

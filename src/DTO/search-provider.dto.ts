@@ -32,4 +32,9 @@ export class SearchProviderDto {
     @IsOptional()
     @IsEnum(ServiceCategory)
     serviceCategory?: ServiceCategory;
+
+    @ApiProperty({ required: false, description: 'Price type (fixed or hourly)' })
+    @IsOptional()
+    @IsString()
+    priceType?: string;
 } 

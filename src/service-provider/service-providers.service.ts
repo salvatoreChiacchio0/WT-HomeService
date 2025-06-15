@@ -110,40 +110,69 @@ export class ServiceProvidersService {
     });
   }
 
-  async search(filters: SearchProviderDto): Promise<ServiceProviders[]> {
-    const query = this.serviceProviderRepository.createQueryBuilder('provider')
-      .leftJoinAndSelect('provider.services', 'services')
-      .leftJoinAndSelect('provider.reviews', 'reviews')
-      .leftJoinAndSelect('provider.user', 'user');
+async search(filters: SearchProviderDto): Promise<ServiceProviders[]> {
+  filters.priceType = filters.priceType?.toString()
+  console.log(filters.priceType)
+  const query = this.serviceProviderRepository.createQueryBuilder('provider')
+    .leftJoinAndSelect('provider.services', 'services')
+    .leftJoinAndSelect('provider.reviews', 'reviews')
+    .leftJoinAndSelect('provider.user', 'user');
 
-    if (filters.query) {
-      query.andWhere('(LOWER(provider.name) LIKE LOWER(:query) OR LOWER(services.service_name) LIKE LOWER(:query))', 
-        { query: `%${filters.query}%` });
-    }
-
-    if (filters.experience) {
-      query.andWhere('provider.experience_years >= :experience', { experience: filters.experience });
-    }
-
-    if (filters.minRating) {
-      query.andWhere('provider.rating >= :minRating', { minRating: filters.minRating });
-    }
-
-    if (filters.location) {
-      query.andWhere('LOWER(services.location) LIKE LOWER(:location)', 
-        { location: `%${filters.location}%` });
-    }
-
-    if (filters.serviceType) {
-      query.andWhere('LOWER(services.service_name) LIKE LOWER(:serviceType)', 
-        { serviceType: `%${filters.serviceType}%` });
-    }
-
-    if (filters.serviceCategory) {
-      query.andWhere('services.service_category = :serviceCategory', 
-        { serviceCategory: filters.serviceCategory });
-    }
-
-    return query.getMany();
+  if (filters.query) {
+    query.andWhere('(LOWER(provider.name) LIKE LOWER(:query) OR LOWER(services.service_name) LIKE LOWER(:query))', 
+      { query: `%${filters.query}%` });
   }
+
+  if (filters.experience) {
+    query.andWhere('provider.experience_years >= :experience', { experience: filters.experience });
+  }
+
+  if (filters.minRating) {
+    query.andWhere(qb => {
+      const subQuery = qb
+        .subQuery()
+        .select('AVG(review.rating)')
+        .from('reviews', 'review')
+        .where('review.provider_id = provider.provider_id')
+        .getQuery();
+      return `${subQuery} >= :minRating`;
+    })
+    .setParameter('minRating', filters.minRating);
+  }
+
+  if (filters.location) {
+    query.andWhere('LOWER(services.location) LIKE LOWER(:location)', 
+      { location: `%${filters.location}%` });
+  }
+
+  if (filters.serviceType) {
+    query.andWhere('LOWER(services.service_name) LIKE LOWER(:serviceType)', 
+      { serviceType: `%${filters.serviceType}%` });
+  }
+
+  if (filters.serviceCategory) {
+    query.andWhere('services.service_category = :serviceCategory', 
+      { serviceCategory: `%${filters.serviceCategory}` });
+  }
+
+  if (filters.priceType) {
+    query.andWhere('LOWER(services.pricing_model) = LOWER(:pricing_model)', 
+      { pricing_model: filters.priceType });
+  }
+
+
+  const providers = await query.getMany();
+
+  return providers.map(provider => {
+    const averageRating = provider.reviews && provider.reviews.length > 0
+      ? provider.reviews.reduce((acc, review) => acc + review.rating, 0) / provider.reviews.length
+      : 0;
+    
+    return {
+      ...provider,
+      rating: averageRating,
+      review_count: provider.reviews?.length || 0
+    };
+  });
+}
 }
