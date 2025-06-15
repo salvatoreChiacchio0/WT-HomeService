@@ -77,8 +77,9 @@ export class ServicesService {
       );
     }
 
-    if (filters.serviceCategory) {
-      query.andWhere('service.service_category = :category', { category: filters.serviceCategory });
+    console.log(filters)
+    if (filters.serviceCategory && filters.serviceCategory !== 'Any') {
+      query.andWhere('LOWER(service.service_category) ILIKE LOWER(:category)', { category: `%${filters.serviceCategory}%` });
     }
 
     if (filters.minPrice) {

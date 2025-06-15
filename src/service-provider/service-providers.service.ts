@@ -156,7 +156,7 @@ async search(filters: SearchProviderDto): Promise<ServiceProviders[]> {
   }
 
   if (filters.priceType) {
-    query.andWhere('LOWER(services.pricing_model) = LOWER(:pricing_model)', 
+    query.andWhere('services.pricing_model ILIKE pricing_model', 
       { pricing_model: filters.priceType });
   }
 
