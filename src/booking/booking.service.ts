@@ -4,12 +4,18 @@ import { Repository } from 'typeorm';
 import { Booking } from 'src/entities/bookings/bookings.entity';
 import { CreateBookingDto } from 'src/DTO/create-booking.dto';
 import { UpdateBookingDto } from 'src/DTO/update-booking.dto';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { UsersService } from 'src/users/users.service';
+import { ServiceProvidersService } from 'src/service-provider/service-providers.service';
 
 @Injectable()
 export class BookingService {
   constructor(
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
+    private readonly serviceProvidersService: ServiceProvidersService,
   ) {}
 
   async findAll(): Promise<Booking[]> {
@@ -87,7 +93,25 @@ export class BookingService {
     }
 
     const booking = this.bookingRepository.create({...createBookingDto});
-    return this.bookingRepository.save(booking);
+    const savedBooking = await this.bookingRepository.save(booking);
+
+    // Get user and provider details for notification
+    const user = await this.usersService.findOneById(createBookingDto.user_id);
+    const provider = await this.serviceProvidersService.findOne(createBookingDto.provider_id);
+
+    if (!user || !provider) {
+      throw new Error('User or provider not found');
+    }
+
+    // Create notification for provider
+    await this.notificationsService.create({
+      type: 'BOOKING_REQUEST',
+      text: `New booking request from ${user.username} for ${new Date(createBookingDto.booking_date).toLocaleDateString()} at ${createBookingDto.booking_time}`,
+        sender: user, // The customer will be notified
+        userId: provider.user_id.toString()
+         });
+
+    return savedBooking;
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto): Promise<Booking> {
@@ -100,7 +124,26 @@ export class BookingService {
     }
 
     Object.assign(booking, updateBookingDto);
-    return this.bookingRepository.save(booking);
+    const updatedBooking = await this.bookingRepository.save(booking);
+
+    // If status is being updated, send notification
+    if (updateBookingDto.status) {
+      const user = await this.usersService.findOneById(booking.user_id);
+      const provider = await this.serviceProvidersService.findOne(booking.provider_id);
+
+      if (!user || !provider) {
+        throw new Error('User or provider not found');
+      }
+      // Create notification for customer
+      await this.notificationsService.create({
+        type: 'BOOKING_STATUS',
+        text: `Your booking has been ${updateBookingDto.status.toLowerCase()}`,
+        sender: user, // The customer will be notified
+        userId: booking.user_id.toString()
+      });
+    }
+
+    return updatedBooking;
   }
 
   async delete(id: number): Promise<void> {

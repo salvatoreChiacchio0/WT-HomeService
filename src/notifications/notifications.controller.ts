@@ -1,40 +1,48 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, ParseUUIDPipe, Request } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { Notification } from './entities/notification.entity';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 
+@ApiBearerAuth()
+@ApiTags('Notifications')
 @Controller('notifications')
 @UseGuards(AuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  async findAll(@Request() req): Promise<Notification[]> {
-    return this.notificationsService.findAll(req.user.sub);
+  findAll(@Request() req): Promise<Notification[]> {
+    return this.notificationsService.findAll(req.user.sub.toString());
   }
 
   @Get('unread')
-  async findUnread(@Request() req): Promise<Notification[]> {
-    return this.notificationsService.findUnread(req.user.sub);
+  findUnread(@Request() req): Promise<Notification[]> {
+    return this.notificationsService.findUnread(req.user.sub.toString());
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<Notification | null> {
+    return this.notificationsService.findOne(id);
   }
 
   @Post(':id/read')
-  async markAsRead(@Param('id') id: string, @Request() req): Promise<Notification> {
-    return this.notificationsService.markAsRead(id, req.user.sub);
+  markAsRead(@Param('id') id: string): Promise<Notification | null> {
+    return this.notificationsService.markAsRead(id);
   }
 
   @Post('read-all')
-  async markAllAsRead(@Request() req): Promise<void> {
-    return this.notificationsService.markAllAsRead(req.user.sub);
+  markAllAsRead(@Request() req): Promise<void> {
+    return this.notificationsService.markAllAsRead(req.user.sub.toString());
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string, @Request() req): Promise<void> {
-    return this.notificationsService.delete(id, req.user.sub);
+  remove(@Param('id') id: string, @Request() req): Promise<void> {
+    return this.notificationsService.remove(id, req.user.sub.toString());
   }
 
   @Delete()
-  async deleteAll(@Request() req): Promise<void> {
-    return this.notificationsService.deleteAll(req.user.sub);
+  removeAll(@Request() req): Promise<void> {
+    return this.notificationsService.removeAll(req.user.sub.toString());
   }
 } 

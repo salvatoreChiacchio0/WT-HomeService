@@ -16,6 +16,7 @@ import { Message } from 'src/entities/chat/chat.entity';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
+import { RedisClientType } from 'redis';
 
 @ApiBearerAuth()
 @WebSocketGateway({
@@ -32,18 +33,19 @@ import { UsersService } from 'src/users/users.service';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  @WebSocketServer()
+  server: Server;
+
   private readonly logger = new Logger(ChatGateway.name);
 
   private clientMap: Map<string, Socket> = new Map();
 
   constructor(
-    @Inject('REDIS_CLIENT') private readonly redisClient,
+    @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
   ) {}
-
-  @WebSocketServer() io: Server;
 
   afterInit() {
     this.logger.log('WebSocket Gateway initialized');
@@ -126,7 +128,7 @@ export class ChatGateway
     // Invia il messaggio SOLO al destinatario
     const recipientSocketId = await this.redisClient.get(`user:${receiver.user_id}`);
     if (recipientSocketId) {
-      this.io.to(recipientSocketId).emit('receive', receivedMsg);
+      this.server.to(recipientSocketId).emit('receive', receivedMsg);
       this.logger.log(`Message sent to receiver ${receiver.username} via socket ${recipientSocketId}`);
     } else {
       this.logger.warn(`Recipient ${receiver.username} with id ${receiver.user_id} is not online`);

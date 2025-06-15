@@ -3,13 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { log } from 'console';
 import { Message } from 'src/entities/chat/chat.entity';
 import { Repository } from 'typeorm';
-
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
 
   private readonly logger = new Logger(ChatService.name);
@@ -54,13 +57,22 @@ export class ChatService {
     }));
 
     return chats;
-}
+  }
   
 
-  async create(msg: Partial<Message>): Promise<Message> {
-    this.messageRepository.create(msg);
+  async create(createMessageDto: Partial<Message>): Promise<Message> {
+    const message = this.messageRepository.create(createMessageDto);
+    const savedMessage = await this.messageRepository.save(message);
 
-    return this.messageRepository.save(msg);
+    // Create notification for the receiver
+    await this.notificationsService.create({
+      type: 'Message',
+      text: `New message received`,
+      user: message.receiver,
+      senderId: message.sender.user_id.toString(),
+    });
+
+    return savedMessage;
   }
 
 }

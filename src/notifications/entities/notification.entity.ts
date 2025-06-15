@@ -1,31 +1,34 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../../entities/users/users.entity';
 
 @Entity('notifications')
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
-  @Column()
-  title: string;
-
-  @Column()
-  message: string;
-
-  @Column({ default: false })
-  isRead: boolean;
-
-  @Column({ nullable: true })
+  @Column({ name: 'type', type: 'varchar', nullable: true })
   type: string;
 
-  @Column({ type: 'json', nullable: true })
-  data: any;
+  @Column({ name: 'text', type: 'text' })
+  text: string;
 
-  @CreateDateColumn()
+  @Column({ name: 'is_read', type: 'boolean', default: false })
+  isRead: boolean;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @Column({ name: 'sender_id', type: 'uuid', nullable: true })
+  senderId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'sender_id' })
+  sender: User;
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 } 

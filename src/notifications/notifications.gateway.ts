@@ -1,32 +1,45 @@
 import { Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { NotificationsService } from './notifications.service';
 import { Notification } from './entities/notification.entity';
 import { JwtService } from '@nestjs/jwt';
-import { Inject } from '@nestjs/common';
+import { Inject, forwardRef } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
 
+@ApiBearerAuth()
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'],
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   },
-  namespace: '/',
+  namespace: '/notifications',
   transports: ['websocket'],
 })
-export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+@ApiTags('Notifications')
+export class NotificationsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(NotificationsGateway.name);
 
   constructor(
     @Inject('REDIS_CLIENT') private readonly redisClient,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   @WebSocketServer() io: Server;
@@ -35,25 +48,28 @@ export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection,
     this.logger.log('Notifications WebSocket Gateway initialized');
   }
 
-  async handleConnection(client: Socket) {
+  async handleConnection(client: Socket, ...args: any[]) {
     try {
       const token = this.extractTokenFromHandshake(client);
       if (!token) {
-        throw new Error('No token provided');
+        client.disconnect(true);
+        this.logger.warn('Client disconnected: No token provided.');
+        return;
       }
-
-      // Remove 'Bearer ' prefix if present
+  
       const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
       
       const payload = await this.jwtService.verifyAsync(cleanToken);
       const userId = payload.sub.toString();
+  
       await this.redisClient.set(`user:${userId}`, client.id, {
-        EX: 1800, // 30 min exp
+        EX: 1800,
       });
+  
+      this.logger.log(`Client connected: ${client.id} for user ${userId}`);
 
-     // this.logger.log(`User ${userId} connected with socket ${client.id}`);
-    } catch (error) {
-      this.logger.error(`Authentication failed: ${error.message}`);
+    } catch (error: any) {
+      this.logger.error(`Connection handling error: ${error.message}`);
       client.disconnect(true);
     }
   }
@@ -73,37 +89,71 @@ export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection,
     }
   }
 
-  async sendNotification(userId: string, notification: Notification) {
-    this.logger.log(notification)
-    try {
-      const recipientSocketId = await this.redisClient.get(`user:${userId}`);
-      this.logger.warn("SOCKET ID",recipientSocketId)
-      if (recipientSocketId) {
-        this.logger.log(`User ${userId} is online (socket: ${recipientSocketId}), sending notification`);
-        this.io.to(recipientSocketId).emit('notification', notification);
-        this.logger.log("sended notification")
-      } else {
-        this.logger.warn(`User ${userId} is not online, notification will be available when they connect`);
-      }
-    } catch (error) {
-      this.logger.error(`Error sending notification: ${error.message}`);
+  @SubscribeMessage('send')
+  @ApiOperation({ summary: 'Send a notification' })
+  @ApiBody({ type: () => Object })
+  async handleNotification(@MessageBody() data: Partial<Notification>) {
+    const notification = await this.notificationsService.create(data);
+    await this.sendNotificationToReceiver(notification);
+  }
+
+  async sendNotificationToReceiver(notification: Notification) {
+    const notificationData = {
+      id: notification.id,
+      type: notification.type,
+      text: notification.text,
+      sender: notification.sender,
+      createdAt: notification.createdAt,
+      isRead: notification.isRead,
+    };
+    
+    this.logger.log(`Sending notification to user ${notification.userId}`);
+    
+    const recipientSocketId = await this.redisClient.get(`user:${notification.userId}`);
+    if (recipientSocketId) {
+      this.io.to(recipientSocketId).emit('notification', notificationData);
+      this.logger.log(`Notification sent to user ${notification.userId} via socket ${recipientSocketId}`);
+    } else {
+      this.logger.warn(`Recipient ${notification.userId} is not online`);
     }
   }
 
-  async sendNotificationToUsers(userIds: string[], notification: Notification) {
-    for (const userId of userIds) {
-      await this.sendNotification(userId, notification);
+  async emitNotificationUpdate(notification: Notification) {
+    const notificationData = {
+      id: notification.id,
+      type: notification.type,
+      text: notification.text,
+      sender: notification.sender,
+      createdAt: notification.createdAt,
+      isRead: notification.isRead,
+    };
+
+    const recipientSocketId = await this.redisClient.get(`user:${notification.userId}`);
+    if (recipientSocketId) {
+      this.io.to(recipientSocketId).emit('notification:update', notificationData);
     }
+  }
+
+  async emitNotificationDelete(notificationId: string, userId: string) {
+    const recipientSocketId = await this.redisClient.get(`user:${userId}`);
+    if (recipientSocketId) {
+      this.io.to(recipientSocketId).emit('notification:delete', notificationId);
+    }
+  }
+
+  @SubscribeMessage('receive')
+  @ApiOperation({ summary: 'Receive a notification' })
+  handleReceive(@MessageBody() data: any) {
+    // This method is just a placeholder for subscription
   }
 
   private extractTokenFromHandshake(client: Socket): string | null {
     try {
-      // Try to get token from auth object first (socket.io-client format)
       if (client.handshake.auth && client.handshake.auth.token) {
-        return client.handshake.auth.token;
+        const auth_token = client.handshake.auth.token as string;
+        return auth_token.startsWith('Bearer ') ? auth_token.slice(7) : auth_token;
       }
 
-      // Fallback to headers
       const authHeader = client.handshake.headers.authorization;
       if (!authHeader) {
         return null;

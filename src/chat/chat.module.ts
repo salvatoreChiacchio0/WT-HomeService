@@ -4,13 +4,25 @@ import { ChatGateway } from './chat.gateway';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Message } from 'src/entities/chat/chat.entity';
 import { ChatService } from './chat.service';
-import { RedisModule } from 'src/redis/redis.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 import { UsersModule } from 'src/users/users.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Message]), RedisModule, UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Message]),
+    NotificationsModule,
+    UsersModule,
+    RedisModule,
+  ],
   controllers: [ChatController],
-  providers: [ChatGateway, ChatService],
-  exports: [ChatService, TypeOrmModule]
+  providers: [
+    ChatService,
+    {
+      provide: ChatGateway,
+      useClass: ChatGateway,
+    },
+  ],
+  exports: [ChatService],
 })
 export class ChatModule {}

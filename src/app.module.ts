@@ -12,6 +12,7 @@ import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { ChatModule } from './chat/chat.module';
 import { CronModule } from './cron/cron.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 dotenv.config();
 
@@ -40,7 +41,8 @@ dotenv.config();
     ReviewsModule,
     AuthModule,
     ChatModule,
-    CronModule
+    CronModule,
+    NotificationsModule
   ],
 })
 export class AppModule {}
